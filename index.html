@@ -396,7 +396,7 @@ tbody tr:hover{background:var(--sur2);}
     </div>
     <!-- PRODUCTS -->
     <div class="view" id="v-products">
-      <div class="view-hdr"><h2>Products &amp; Categories</h2><div style="display:flex;gap:6px"><button class="btn-s" id="btn-addcat">+ Category</button><button class="btn-p" id="btn-addprod">+ Product</button></div></div>
+      <div class="view-hdr"><h2>Products &amp; Categories</h2><div style="display:flex;gap:6px"><button class="btn-excel" id="btn-export-products">📊 Export Products</button><button class="btn-s" id="btn-addcat">+ Category</button><button class="btn-p" id="btn-addprod">+ Product</button></div></div>
       <div class="prod-mgmt"><div class="cats-panel"><div class="cats-panel-hdr">Categories</div><div class="cats-list" id="cats-list"></div></div><div class="prod-tbl-wrap" id="prod-tbl-wrap"></div></div>
     </div>
     <!-- COSTS -->
@@ -438,7 +438,7 @@ tbody tr:hover{background:var(--sur2);}
     </div>
     <!-- CUSTOMERS -->
     <div class="view" id="v-customers">
-      <div class="view-hdr"><h2>👥 Customers</h2><button class="btn-p" id="btn-addcust">+ Add Customer</button></div>
+      <div class="view-hdr"><h2>👥 Customers</h2><button class="btn-p" id="btn-addcust" style="display:none">+ Add Customer</button></div>
       <div class="cust-wrap"><div class="cust-search-bar"><input id="cust-srch" placeholder="🔍 Search by name or phone..." oninput="renderCustomers()"></div><div class="cust-grid" id="cust-grid"></div></div>
     </div>
     <!-- USERS -->
@@ -536,9 +536,32 @@ tbody tr:hover{background:var(--sur2);}
   </div>
 </div>
 <div class="modal-bg" id="m-receipt">
-  <div class="modal" style="max-width:380px"><h3 id="receipt-title">✅ Sale Complete</h3><div class="modal-sub" id="receipt-sub">Transaction recorded</div>
+  <div class="modal" style="max-width:420px"><h3 id="receipt-title">✅ Sale Complete</h3><div class="modal-sub" id="receipt-sub">Transaction recorded</div>
     <div id="receipt-body"></div>
-    <div class="modal-foot"><button class="btn-s" id="receipt-close-btn">New Sale</button><button class="btn-p" onclick="window.print()">🖨 Print</button></div>
+    <div class="modal-foot">
+      <button class="btn-s" id="receipt-close-btn">New Sale</button>
+      <button class="btn-p" id="receipt-edit-btn" style="display:none;background:var(--amber)">✏️ Edit Sale</button>
+      <button class="btn-p" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Sale Modal (admin only) -->
+<div class="modal-bg" id="m-edit-sale">
+  <div class="modal" style="max-width:560px">
+    <h3>✏️ Edit Sale <span id="edit-sale-id" style="color:var(--tx3);font-size:13px;font-weight:400"></span></h3>
+    <div class="modal-sub">Admin only — edit items, quantities, prices or delete this sale</div>
+    <div id="edit-sale-items" style="margin-bottom:12px;max-height:300px;overflow-y:auto;"></div>
+    <div style="background:var(--sur2);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Discount (IQD)</label>
+      <input id="edit-sale-discount" type="number" min="0" step="250" style="width:130px;padding:6px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:'DM Mono',monospace;font-size:13px;outline:none;">
+      <div id="edit-sale-total" style="margin-left:auto;font-size:18px;font-weight:700;color:var(--gr);font-family:'DM Mono',monospace;"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="edit-sale-delete-btn" style="padding:7px 14px;background:var(--re-l);color:var(--re);border:1px solid #f5c6c2;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;margin-right:auto;">🗑 Delete Sale</button>
+      <button class="btn-s" id="edit-sale-cancel-btn">Cancel</button>
+      <button class="btn-p" id="edit-sale-save-btn">💾 Save Changes</button>
+    </div>
   </div>
 </div>
 <div class="toasts" id="toasts"></div>
@@ -568,8 +591,6 @@ const firebaseConfig = {
 };
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-import { setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-setPersistence(auth, browserSessionPersistence);
 const db   = getFirestore(app);
 
 // ══════════════════════════════════════════
@@ -781,6 +802,9 @@ function setupRealtimeListeners() {
 // ══════════════════════════════════════════
 function setupUI() {
   document.getElementById('top-av').textContent   = ME.name.charAt(0);
+  // Show/hide + Add Customer button based on role
+  const addCustBtn = document.getElementById('btn-addcust');
+  if (addCustBtn) addCustBtn.style.display = ME.role === 'cashier' ? 'none' : '';
   document.getElementById('top-name').textContent = ME.name;
   const rb = document.getElementById('top-role');
   rb.textContent = ME.role.charAt(0).toUpperCase()+ME.role.slice(1);
@@ -902,7 +926,7 @@ function renderShifts() {
     const col      = colors[sh.cashierId ? sh.cashierId.charCodeAt(0)%colors.length : 0];
     const salesHTML = shS.length
       ? '<div class="shift-sales-hdr"># &nbsp; Time &nbsp;&nbsp; Customer &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Items &nbsp; Discount &nbsp;&nbsp;&nbsp; Total</div>'+
-        shS.map(s=>`<div class="shift-sale-row" onclick="showReceipt(DB.sales.find(x=>x.id==='${s.id}'),false)">
+        shS.map(s=>`<div class="shift-sale-row" onclick="window.openSaleById('${s.id}')">
           <span class="ss-id">#${s.id.slice(-4)}</span>
           <span class="ss-time">${fmtT(s.date)}</span>
           <span class="ss-cust">${s.customerName||'<span style="color:var(--tx3)">Walk-in</span>'}</span>
@@ -936,7 +960,7 @@ function renderShifts() {
   }).join('');
 }
 // Expose to window for onclick in innerHTML
-window.DB = DB;
+
 window.showReceipt = showReceipt;
 
 // ══════════════════════════════════════════
@@ -1089,11 +1113,15 @@ function showReceipt(s, isNew) {
     <hr class="rdiv">
     <div class="rrow rtotal"><span>TOTAL</span><span>${fmt(s.total)}</span></div>
   </div>`;
+
   const closeBtn = document.getElementById('receipt-close-btn');
+  const editBtn  = document.getElementById('receipt-edit-btn');
+
   if (isNew) {
     document.getElementById('receipt-title').textContent='✅ Sale Complete';
     document.getElementById('receipt-sub').textContent='Saved to Firebase';
     closeBtn.textContent='New Sale';
+    if (editBtn) editBtn.style.display='none';
     const nb=closeBtn.cloneNode(true); closeBtn.parentNode.replaceChild(nb,closeBtn);
     nb.addEventListener('click',()=>{ closeM('m-receipt'); clearCart(); });
   } else {
@@ -1102,6 +1130,16 @@ function showReceipt(s, isNew) {
     closeBtn.textContent='Close';
     const nb=closeBtn.cloneNode(true); closeBtn.parentNode.replaceChild(nb,closeBtn);
     nb.addEventListener('click',()=>closeM('m-receipt'));
+    // Show Edit button only for admin
+    if (editBtn) {
+      if (ME && ME.role==='admin') {
+        editBtn.style.display='';
+        const neb=editBtn.cloneNode(true); editBtn.parentNode.replaceChild(neb,editBtn);
+        neb.addEventListener('click',()=>{ closeM('m-receipt'); openEditSale(s); });
+      } else {
+        editBtn.style.display='none';
+      }
+    }
   }
   openM('m-receipt');
 }
@@ -1162,7 +1200,7 @@ function renderReports() {
     <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Cashier</th><th>Shift</th><th>Customer</th><th>Items</th><th>Discount</th><th>Total</th><th></th></tr></thead>
     <tbody>${[...sales].map(s=>{
       const sid=s.id.slice(-6);
-      return `<tr class="rep-row-clickable" onclick="window.showReceipt(window.DB.sales.find(x=>x.id==='${s.id}'),false)">
+      return `<tr class="rep-row-clickable" onclick="window.openSaleById('${s.id}')">
         <td style="font-family:'DM Mono',monospace;color:var(--tx3)">#${sid}</td>
         <td style="font-size:12px">${fmtD(s.date)}</td>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)">${fmtT(s.date)}</td>
@@ -1257,26 +1295,18 @@ function guard(fn) {
   };
 }
 
-window.addCat = guard(async function () {
-  const name = document.getElementById('nc-name').value.trim();
-  if (!name) return;
-
+window.addCat = guard(async function(){
+  const name=document.getElementById('nc-name').value.trim();if(!name)return;
   showLoading('Saving...');
-  try {
-    const ref = await addDoc(COL.cats(), { name });
-    DB.cats.push({ id: ref.id, name });
-    DB.cats.sort((a, b) => a.name.localeCompare(b.name));
-
-    document.getElementById('nc-name').value = '';
-    closeM('m-addcat');
-    renderMgmt();
-    renderChips();
-    toast('Category added', 'ok');
-  } catch (e) {
-    toast('Error: ' + e.message, 'err');
-  } finally {
-    hideLoading();
-  }
+  try{
+    const ref=await addDoc(COL.cats(),{name});
+    DB.cats.push({id:ref.id,name});
+    DB.cats.sort((a,b)=>a.name.localeCompare(b.name));
+    document.getElementById('nc-name').value='';
+    closeM('m-addcat');renderMgmt();renderChips();
+    toast('Category added','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  hideLoading();
 });
 window.openEditCat=function(id){const c=getCat(id);document.getElementById('ec-name').value=c.name;document.getElementById('ec-id').value=id;openM('m-editcat');};
 window.saveCat=async function(){
@@ -1306,6 +1336,58 @@ window.addProd=async function(){
   showLoading('Saving...');
   try{const ref=await addDoc(COL.products(),{name,bar,price,cost:0,cat,emoji,img,stock,threshold});DB.products.push({id:ref.id,name,bar,price,cost:0,cat,emoji,img,stock,threshold});['np-name','np-bar','np-price','np-emoji','np-stock','np-threshold'].forEach(id=>document.getElementById(id).value='');const prev=document.getElementById('np-prev');prev.innerHTML='';delete prev.dataset.src;closeM('m-addprod');renderMgmt();renderGrid();renderChips();toast('Product added','ok');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
+};
+// ── Product & Category Excel Export ──
+window.exportProducts = function() {
+  if (!DB.products.length) { toast('No products to export', 'err'); return; }
+  const wb = XLSX.utils.book_new();
+  const now = new Date();
+
+  // Sheet 1: Categories
+  const catRows = [['Category ID', 'Category Name', 'Product Count']];
+  DB.cats.forEach(c => {
+    catRows.push([c.id, c.name, DB.products.filter(p => p.cat === c.id).length]);
+  });
+  const uncatCount = DB.products.filter(p => !p.cat).length;
+  if (uncatCount) catRows.push(['—', 'Uncategorized', uncatCount]);
+  const ws1 = XLSX.utils.aoa_to_sheet(catRows);
+  ws1['!cols'] = [{wch:24},{wch:28},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws1, '📁 Categories');
+
+  // Sheet 2: All Products
+  const prodRows = [['Name','Barcode','Category','Price (IQD)','Cost (IQD)','Margin %','Stock','Alert Threshold','Status','Emoji']];
+  DB.products.forEach(p => {
+    const cat = getCat(p.cat);
+    const margin = p.price > 0 && p.cost > 0 ? +((p.price - p.cost) / p.price * 100).toFixed(1) : 0;
+    const ss = stockStatus(p);
+    prodRows.push([
+      p.name, p.bar, cat ? cat.name : 'Uncategorized',
+      Math.round(p.price), Math.round(p.cost || 0), margin,
+      p.stock ?? 0, p.threshold ?? 0,
+      ss === 'out' ? 'OUT OF STOCK' : ss === 'warn' ? 'LOW STOCK' : 'OK',
+      p.emoji || ''
+    ]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(prodRows);
+  ws2['!cols'] = [{wch:30},{wch:16},{wch:20},{wch:14},{wch:14},{wch:10},{wch:8},{wch:14},{wch:14},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws2, '📦 All Products');
+
+  // Sheet 3: Stock Alerts
+  const alertProds = DB.products.filter(p => stockStatus(p) !== 'ok');
+  if (alertProds.length) {
+    const alertRows = [['Name','Barcode','Category','Stock','Threshold','Status']];
+    alertProds.forEach(p => {
+      const cat = getCat(p.cat);
+      alertRows.push([p.name, p.bar, cat ? cat.name : '—', p.stock, p.threshold, p.stock === 0 ? 'OUT' : 'LOW']);
+    });
+    const ws3 = XLSX.utils.aoa_to_sheet(alertRows);
+    ws3['!cols'] = [{wch:30},{wch:16},{wch:20},{wch:8},{wch:12},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws3, '🔔 Stock Alerts');
+  }
+
+  const fn = `Shathriat_Products_${now.toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fn);
+  toast('✅ Exported: ' + fn, 'ok');
 };
 window.openEditProd=function(id){
   const p=getProd(id);
@@ -1443,6 +1525,33 @@ window.clearCustomer=function(){
   document.getElementById('cust-search-wrap').style.display='block';document.getElementById('cust-selected-tag').style.display='none';
   document.getElementById('cust-search-inp').value='';document.getElementById('cust-results').style.display='none';updateTotals();
 };
+// ══════════════════════════════════════════
+// BARCODE SCANNER — Global keystroke capture
+// ══════════════════════════════════════════
+let barBuffer = '';
+let barTimeout = null;
+
+document.addEventListener('keydown', e => {
+  // Don't capture if user is typing in an input/textarea/select
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  
+  // Only capture printable characters and Enter
+  if (e.key === 'Enter' && barBuffer.length >= 3) {
+    e.preventDefault();
+    doScan(barBuffer);
+    barBuffer = '';
+    clearTimeout(barTimeout);
+    return;
+  }
+  
+  if (e.key.length === 1) { // printable character
+    barBuffer += e.key;
+    clearTimeout(barTimeout);
+    // Reset buffer after 100ms of no input (scanner types fast)
+    barTimeout = setTimeout(() => { barBuffer = ''; }, 100);
+  }
+});
 document.addEventListener('click',e=>{const w=document.getElementById('cust-pick-bar');if(w&&!w.contains(e.target)){const r=document.getElementById('cust-results');if(r)r.style.display='none';}});
 window.addCustomer=async function(){
   const name=document.getElementById('nc-cname').value.trim();
@@ -1490,8 +1599,10 @@ function renderCustomers(){
       </div>
       <div class="cust-acts" onclick="event.stopPropagation()">
         <button class="btn-s" style="font-size:11px;padding:4px 8px" onclick="window.openCustProfile('${c.id}')">📋 History</button>
-        <button class="btn-s" style="font-size:11px;padding:4px 8px" onclick="window.openEditCust('${c.id}')">✏️ Edit</button>
-        <button class="btn-d" onclick="window.deleteCustomer('${c.id}')">Remove</button>
+        ${ME&&ME.role!=='cashier'?`
+          <button class="btn-s" style="font-size:11px;padding:4px 8px" onclick="window.openEditCust('${c.id}')">✏️ Edit</button>
+          <button class="btn-d" onclick="window.deleteCustomer('${c.id}')">Remove</button>
+        `:''}
         <button class="btn-p" style="font-size:11px;padding:4px 8px;margin-left:auto" onclick="window.selectAndGoPos('${c.id}')">🧾 Sale</button>
       </div>
     </div>`;
@@ -1647,6 +1758,7 @@ function wireAllButtons() {
   // Products view
   wireBtn('btn-addcat',  () => openM('m-addcat'));
   wireBtn('btn-addprod', () => window.openAddProd());
+  wireBtn('btn-export-products', () => window.exportProducts());
 
   // Category modals
   wireBtn('btn-cancel-addcat',  () => closeM('m-addcat'));
@@ -1681,6 +1793,11 @@ function wireAllButtons() {
   wireBtn('btn-do-savecust',       () => window.saveCustomer());
   wireBtn('btn-close-custprofile', () => closeM('m-custprofile'));
 
+  // Edit sale modal (admin)
+  wireBtn('edit-sale-cancel-btn', () => closeM('m-edit-sale'));
+  wireBtn('edit-sale-save-btn',   () => saveEditSale());
+  wireBtn('edit-sale-delete-btn', () => deleteEditSale());
+
   // Nav tabs
   document.querySelectorAll('.ntab').forEach(tab => {
     tab.addEventListener('click', function() {
@@ -1714,7 +1831,7 @@ function wireAllButtons() {
   // Modal backdrop click to close
   document.querySelectorAll('.modal-bg').forEach(m =>
     m.addEventListener('click', e => {
-      if (e.target===m && m.id!=='m-startup-alert' && m.id!=='m-startshift')
+      if (e.target===m && m.id!=='m-startup-alert' && m.id!=='m-startshift' && m.id!=='m-edit-sale')
         m.classList.remove('open');
     })
   );
@@ -1728,7 +1845,142 @@ function wireAllButtons() {
 wireAllButtons();
 
 
-// All functions needed globally
+// ══════════════════════════════════════════
+// EDIT SALE — Admin only
+// ══════════════════════════════════════════
+let editingSale = null; // the sale object being edited (deep copy)
+
+function openEditSale(s) {
+  // Deep copy so we don't mutate the original until Save
+  editingSale = JSON.parse(JSON.stringify(s));
+  document.getElementById('edit-sale-id').textContent = '— Sale #' + s.id.slice(-6);
+  document.getElementById('edit-sale-discount').value  = Math.round(s.discount);
+  document.getElementById('edit-sale-discount').addEventListener('input', updateEditSaleTotal);
+  renderEditSaleItems();
+  updateEditSaleTotal();
+  openM('m-edit-sale');
+}
+
+function renderEditSaleItems() {
+  const wrap = document.getElementById('edit-sale-items');
+  wrap.innerHTML = editingSale.items.map((item, idx) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--rs);border:1.5px solid var(--bdr);background:var(--sur);margin-bottom:6px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
+        <div style="font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace">${item.bar}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+        <button class="qbtn" onclick="editSaleQty(${idx},-1)">−</button>
+        <span style="min-width:24px;text-align:center;font-family:'DM Mono',monospace;font-weight:700">${item.qty}</span>
+        <button class="qbtn" onclick="editSaleQty(${idx},1)">+</button>
+      </div>
+      <div style="flex-shrink:0;width:110px;">
+        <input type="number" min="0" step="250" value="${Math.round(item.price)}"
+          onchange="editSalePrice(${idx}, this.value)"
+          style="width:100%;padding:5px 8px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;outline:none;text-align:right;">
+      </div>
+      <button onclick="editSaleRemoveItem(${idx})" style="border:none;background:transparent;color:var(--tx3);font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;" title="Remove item">×</button>
+    </div>`).join('');
+}
+
+window.editSaleQty = function(idx, delta) {
+  editingSale.items[idx].qty += delta;
+  if (editingSale.items[idx].qty <= 0) {
+    editingSale.items.splice(idx, 1);
+  } else {
+    editingSale.items[idx].line = editingSale.items[idx].price * editingSale.items[idx].qty;
+  }
+  renderEditSaleItems();
+  updateEditSaleTotal();
+};
+
+window.editSalePrice = function(idx, val) {
+  const price = parseFloat(val) || 0;
+  editingSale.items[idx].price = price;
+  editingSale.items[idx].line  = price * editingSale.items[idx].qty;
+  updateEditSaleTotal();
+};
+
+window.editSaleRemoveItem = function(idx) {
+  editingSale.items.splice(idx, 1);
+  renderEditSaleItems();
+  updateEditSaleTotal();
+};
+
+function updateEditSaleTotal() {
+  const subtotal  = editingSale.items.reduce((a,i) => a + i.line, 0);
+  const discount  = parseFloat(document.getElementById('edit-sale-discount').value) || 0;
+  const total     = Math.max(0, subtotal - discount);
+  editingSale.subtotal = subtotal;
+  editingSale.discount = discount;
+  editingSale.total    = total;
+  document.getElementById('edit-sale-total').textContent =
+    'Total: ' + fmt(total) + (discount>0 ? '  (-'+fmt(discount)+')' : '');
+}
+
+async function saveEditSale() {
+  if (!editingSale) return;
+  if (!editingSale.items.length) {
+    toast('Sale has no items — use Delete instead', 'err'); return;
+  }
+  showLoading('Saving changes...');
+  try {
+    const updated = {
+      items:    editingSale.items,
+      subtotal: editingSale.subtotal,
+      discount: editingSale.discount,
+      total:    editingSale.total,
+      editedBy: ME.name,
+      editedAt: new Date().toISOString(),
+    };
+    await updateDoc(doc(db, 'sales', editingSale.id), updated);
+    // Update local DB
+    const local = DB.sales.find(s => s.id === editingSale.id);
+    if (local) Object.assign(local, updated);
+    closeM('m-edit-sale');
+    renderReports();
+    toast('✅ Sale updated successfully', 'ok');
+  } catch(e) { toast('Error: '+e.message, 'err'); }
+  hideLoading();
+}
+
+async function deleteEditSale() {
+  if (!editingSale) return;
+  if (!confirm('Delete Sale #'+editingSale.id.slice(-6)+'?\nThis cannot be undone.')) return;
+  showLoading('Deleting sale...');
+  try {
+    await deleteDoc(doc(db, 'sales', editingSale.id));
+    // Remove from local DB
+    DB.sales = DB.sales.filter(s => s.id !== editingSale.id);
+    // Remove from shift saleIds if linked
+    if (editingSale.shiftId) {
+      const sh = DB.shifts.find(x => x.id === editingSale.shiftId);
+      if (sh) {
+        sh.saleIds = sh.saleIds.filter(id => id !== editingSale.id);
+        await updateDoc(doc(db,'shifts',sh.id), { saleIds: sh.saleIds });
+      }
+    }
+    closeM('m-edit-sale');
+    renderReports();
+    renderShifts();
+    toast('Sale deleted', 'err');
+  } catch(e) { toast('Error: '+e.message, 'err'); }
+  hideLoading();
+}
+
+// Always look up from the live DB array — never from a stale window.DB reference
+window.openSaleById = function(id) {
+  const s = DB.sales.find(x => x.id === id);
+  if (!s) { toast('Sale not found','err'); return; }
+  showReceipt(s, false);
+};
+
+// Wire edit sale modal buttons
+window.openEditSale   = openEditSale;
+window.saveEditSale   = saveEditSale;
+window.deleteEditSale = deleteEditSale;
+
+// ── All functions needed globally ──
 window.doLogin       = doLogin;
 window.doLogout      = doLogout;
 window.goView        = goView;
@@ -1751,7 +2003,7 @@ window.renderStock   = renderStock;
 window.renderMgmt    = renderMgmt;
 window.renderCosts   = renderCosts;
 window.doScan        = doScan;
-window.DB            = DB;
+
 window.getFilteredSales = getFilteredSales;
 
 // Expose functions needed by inline onclick handlers
