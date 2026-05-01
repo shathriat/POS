@@ -89,6 +89,11 @@ button{font-family:inherit;cursor:pointer;}
 .ci-price{font-size:12px;font-weight:700;color:var(--gr);min-width:80px;text-align:right;flex-shrink:0;font-family:'DM Mono',monospace;}
 .ci-rm{width:20px;height:20px;border:none;background:transparent;color:var(--tx3);font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:4px;}
 .ci-rm:hover{color:var(--re);background:var(--re-l);}
+.ci-gift{width:22px;height:22px;border:none;background:transparent;color:var(--tx3);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:4px;cursor:pointer;transition:.15s;}
+.ci-gift:hover{background:var(--gr-l);}
+.ci-gift.active{color:var(--gr);background:var(--gr-l);border:1.5px solid var(--gr);}
+.ci-price.gifted{text-decoration:line-through;color:var(--tx3);font-size:10px;}
+.ci-price-gift{font-size:12px;font-weight:700;color:var(--gr);min-width:80px;text-align:right;flex-shrink:0;font-family:'DM Mono',monospace;}
 .cart-foot{border-top:1px solid var(--bdr);padding:12px;flex-shrink:0;}
 .sub-row{display:flex;justify-content:space-between;font-size:12px;color:var(--tx2);margin-bottom:8px;}
 .disc-box{background:var(--sur2);border-radius:var(--rs);padding:9px;margin-bottom:9px;}
@@ -345,6 +350,7 @@ tbody tr:hover{background:var(--sur2);}
         <button class="ntab" onclick="goView('stock',this)">🔔 Alerts</button>
         <button class="ntab" onclick="goView('customers',this)">👥 Customers</button>
         <button class="ntab" onclick="goView('users',this)" data-role="admin">👤 Users</button>
+        <button class="ntab" onclick="goView('settings',this)" data-role="admin">⚙️ Settings</button>
       </div>
     </div>
     <div class="tbar-r">
@@ -385,12 +391,13 @@ tbody tr:hover{background:var(--sur2);}
             </div>
           </div>
           <div class="total-row"><div><div class="total-lbl">Total</div><div class="total-saved" id="saved-lbl"></div></div><div class="total-amt" id="c-total">0 IQD</div></div>
+          <div style="margin-bottom:6px"><textarea id="sale-note" placeholder="📝 Note (optional)..." rows="2" style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:inherit;font-size:12px;background:var(--sur);color:var(--tx);outline:none;resize:none;line-height:1.4;" onfocus="this.style.borderColor='var(--gr)'" onblur="this.style.borderColor='var(--bdr)'"></textarea></div>
           <button class="clear-btn" id="btn-clear-cart">🗑 Clear Sale</button>
           <button class="co-btn" id="co-btn" id="co-btn" disabled>Checkout →</button>
         </div>
       </div>
       <div class="prod-panel">
-        <div class="prod-toolbar"><input class="srch-inp" id="psrch" placeholder="🔍 Search products..." oninput="renderGrid()"><div class="chips" id="chips"></div></div>
+        <div class="prod-toolbar"><input class="srch-inp" id="psrch" placeholder="🔍 Search products..." oninput="renderGrid()"><div class="chips" id="chips"></div><select id="prod-sort" onchange="renderGrid()" style="padding:4px 7px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:inherit;font-size:11px;background:var(--sur);color:var(--tx2);outline:none;flex-shrink:0;cursor:pointer;"><option value="">Sort</option><option value="name-az">Name A→Z</option><option value="name-za">Name Z→A</option><option value="price-lo">Price Low→High</option><option value="price-hi">Price High→Low</option><option value="stock-lo">Stock Low→High</option></select></div>
         <div class="prod-grid" id="prod-grid"></div>
       </div>
     </div>
@@ -439,12 +446,27 @@ tbody tr:hover{background:var(--sur2);}
     <!-- CUSTOMERS -->
     <div class="view" id="v-customers">
       <div class="view-hdr"><h2>👥 Customers</h2><button class="btn-p" id="btn-addcust" style="display:none">+ Add Customer</button></div>
-      <div class="cust-wrap"><div class="cust-search-bar"><input id="cust-srch" placeholder="🔍 Search by name or phone..." oninput="renderCustomers()"></div><div class="cust-grid" id="cust-grid"></div></div>
+      <div class="cust-wrap"><div class="cust-search-bar" style="display:flex;gap:8px;align-items:center"><input id="cust-srch" placeholder="🔍 Search by name or phone..." oninput="renderCustomers()" style="flex:1"><select id="cust-sort" onchange="renderCustomers()" style="padding:8px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:inherit;font-size:13px;background:var(--sur);color:var(--tx2);outline:none;cursor:pointer;flex-shrink:0"><option value="">Sort</option><option value="name-az">Name A→Z</option><option value="name-za">Name Z→A</option><option value="phone">Phone</option><option value="spent-hi">Most Spent</option><option value="visits-hi">Most Visits</option></select></div><div class="cust-grid" id="cust-grid"></div></div>
     </div>
     <!-- USERS -->
     <div class="view" id="v-users">
       <div class="view-hdr"><h2>👤 User Management</h2><button class="btn-p" id="btn-adduser">+ Add User</button></div>
       <div class="users-wrap"><div class="users-grid" id="users-grid"></div></div>
+    </div>
+    <!-- SETTINGS -->
+    <div class="view" id="v-settings" style="flex-direction:column;overflow:hidden;">
+      <div class="view-hdr"><h2>⚙️ Settings</h2></div>
+      <div style="flex:1;overflow-y:auto;padding:16px;">
+        <!-- Payment Methods -->
+        <div class="cost-sec" style="max-width:520px;">
+          <div class="cost-sec-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>💳 Payment Methods</span>
+            <button class="btn-p" style="padding:5px 11px;font-size:12px;" onclick="window.openAddPayment()">+ Add</button>
+          </div>
+          <div id="pm-list"></div>
+          <div id="pm-empty" style="padding:18px 14px;font-size:13px;color:var(--tx3);display:none;">No payment methods yet. Click + Add to create one.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -564,6 +586,31 @@ tbody tr:hover{background:var(--sur2);}
     </div>
   </div>
 </div>
+<!-- Add Payment Method Modal -->
+<div class="modal-bg" id="m-addpayment">
+  <div class="modal" style="max-width:360px">
+    <h3>➕ Add Payment Method</h3>
+    <div class="modal-sub">This will appear as a button at checkout</div>
+    <div class="fl"><label>Name *</label><input class="fi" id="npm-name" placeholder="e.g. FIB, Cash, Nass Pay..."></div>
+    <div class="fl"><label>Icon (emoji)</label><input class="fi" id="npm-icon" placeholder="e.g. 💵 🏦 📱" style="font-size:18px;" maxlength="4"></div>
+    <div class="fl"><label>Order (display position)</label><input class="fi" id="npm-order" type="number" min="1" placeholder="1, 2, 3..."></div>
+    <div class="modal-foot">
+      <button class="btn-s" onclick="closeM('m-addpayment')">Cancel</button>
+      <button class="btn-p" onclick="window.saveAddPayment()">Add</button>
+    </div>
+  </div>
+</div>
+<!-- Payment Method Checkout Modal -->
+<div class="modal-bg" id="m-payment">
+  <div class="modal" style="max-width:400px">
+    <h3>💳 Payment Method</h3>
+    <div class="modal-sub">Select how the customer is paying</div>
+    <div id="payment-methods-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"></div>
+    <div class="modal-foot">
+      <button class="btn-s" id="payment-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
 <div class="toasts" id="toasts"></div>
 <script type="module">
 // ══════════════════════════════════════════
@@ -597,12 +644,14 @@ const db   = getFirestore(app);
 // FIRESTORE COLLECTION REFS
 // ══════════════════════════════════════════
 const COL = {
-  products:  () => collection(db, 'products'),
-  cats:      () => collection(db, 'categories'),
-  sales:     () => collection(db, 'sales'),
-  shifts:    () => collection(db, 'shifts'),
-  customers: () => collection(db, 'customers'),
-  users:     () => collection(db, 'users'),
+  products:       () => collection(db, 'products'),
+  cats:           () => collection(db, 'categories'),
+  sales:          () => collection(db, 'sales'),
+  shifts:         () => collection(db, 'shifts'),
+  customers:      () => collection(db, 'customers'),
+  users:          () => collection(db, 'users'),
+  paymentMethods: () => collection(db, 'paymentMethods'),
+  logs:           () => collection(db, 'logs'),
 };
 
 // ══════════════════════════════════════════
@@ -615,9 +664,23 @@ const fmtDT= d  => fmtD(d)+' '+fmtT(d);
 const tsToDate = ts => ts?.toDate ? ts.toDate() : new Date(ts);
 
 // ══════════════════════════════════════════
+// ACTIVITY LOG
+// ══════════════════════════════════════════
+function writeLog(action, details={}) {
+  if (!ME) return;
+  addDoc(COL.logs(), {
+    action, details,
+    user:   ME.name,
+    userId: ME.id,
+    role:   ME.role,
+    ts:     serverTimestamp(),
+  }).catch(()=>{});
+}
+
+// ══════════════════════════════════════════
 // LOCAL STATE (populated from Firestore)
 // ══════════════════════════════════════════
-let DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[] };
+let DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[] };
 let ME = null;          // logged-in user profile (from Firestore users collection)
 let cart = [];
 let dType = 'pct', dVal = 0;
@@ -697,6 +760,7 @@ async function doLogout() {
     if (!confirm('You have an active shift. End it and sign out?')) return;
     await endShiftQuiet();
   }
+  writeLog('logout');
   unsubs.forEach(u => u()); unsubs = [];
   cart = []; dVal = 0; selectedCustomer = null; activeShift = null; ME = null;
   DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[] };
@@ -731,6 +795,7 @@ onAuthStateChanged(auth, async fbUser => {
       document.getElementById('lerr').classList.add('hidden');
       setupUI();
       await loadAllData();
+      writeLog('login', { email: fbUser.email });
       initPOS();
       const out = DB.products.filter(p=>p.stock===0);
       const low = DB.products.filter(p=>p.stock>0&&p.threshold>0&&p.stock<=p.threshold);
@@ -750,15 +815,17 @@ onAuthStateChanged(auth, async fbUser => {
 // ══════════════════════════════════════════
 async function loadAllData() {
   showLoading('Syncing data...');
-  const [catsSnap, prodsSnap, salesSnap, shiftsSnap, custsSnap] = await Promise.all([
+  const [catsSnap, prodsSnap, salesSnap, shiftsSnap, custsSnap, pmSnap] = await Promise.all([
     getDocs(query(COL.cats(),     orderBy('name'))),
     getDocs(query(COL.products(), orderBy('name'))),
     getDocs(query(COL.sales(),    orderBy('date', 'desc'))),
     getDocs(query(COL.shifts(),   orderBy('startTime', 'desc'))),
     getDocs(query(COL.customers(),orderBy('name'))),
+    getDocs(COL.paymentMethods()),
   ]);
-  DB.cats      = catsSnap.docs.map(d  => ({ id:d.id, ...d.data() }));
-  DB.products  = prodsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+  DB.cats           = catsSnap.docs.map(d  => ({ id:d.id, ...d.data() }));
+  DB.products       = prodsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+  DB.paymentMethods = pmSnap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.order||99)-(b.order||99));
   DB.sales     = salesSnap.docs.map(d => ({
     id:d.id, ...d.data(),
     date: tsToDate(d.data().date).toISOString(),
@@ -826,7 +893,63 @@ function goView(name, btn) {
   if (name==='stock')     renderStock();
   if (name==='customers') renderCustomers();
   if (name==='users')     renderUsers();
+  if (name==='settings')  renderSettings();
 }
+
+// ══════════════════════════════════════════
+// SETTINGS — Payment Methods
+// ══════════════════════════════════════════
+function renderSettings() {
+  const list  = document.getElementById('pm-list');
+  const empty = document.getElementById('pm-empty');
+  if (!list) return;
+  if (!DB.paymentMethods.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = DB.paymentMethods.map(m => `
+    <div class="cost-row" style="justify-content:space-between;">
+      <span style="font-size:20px;min-width:28px">${m.icon||'💳'}</span>
+      <span style="flex:1;font-size:14px;font-weight:600;margin-left:8px">${m.name}</span>
+      <span style="font-size:11px;color:var(--tx3);margin-right:10px">order: ${m.order??'—'}</span>
+      <button class="btn-d" onclick="window.deletePaymentMethod('${m.id}','${(m.name||'').replace(/'/g,"\\'")}')">Delete</button>
+    </div>`).join('');
+}
+window.openAddPayment = function() {
+  ['npm-name','npm-icon','npm-order'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  openM('m-addpayment');
+};
+window.saveAddPayment = async function() {
+  const name  = document.getElementById('npm-name').value.trim();
+  const icon  = document.getElementById('npm-icon').value.trim() || '💳';
+  const order = parseInt(document.getElementById('npm-order').value) || (DB.paymentMethods.length + 1);
+  if (!name) { toast('Name is required','err'); return; }
+  showLoading('Saving...');
+  try {
+    const ref = await addDoc(COL.paymentMethods(), { name, icon, order });
+    DB.paymentMethods.push({ id:ref.id, name, icon, order });
+    DB.paymentMethods.sort((a,b)=>(a.order||99)-(b.order||99));
+    closeM('m-addpayment');
+    renderSettings();
+    writeLog('payment_method_added', { name, icon });
+    toast('Payment method added: '+name, 'ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+};
+window.deletePaymentMethod = async function(id, name) {
+  if (!confirm('Delete payment method "'+name+'"?')) return;
+  showLoading('Deleting...');
+  try {
+    await deleteDoc(doc(db,'paymentMethods',id));
+    DB.paymentMethods = DB.paymentMethods.filter(m => m.id !== id);
+    renderSettings();
+    writeLog('payment_method_deleted', { id, name });
+    toast('Deleted: '+name, 'err');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+};
 
 // ══════════════════════════════════════════
 // SHIFTS — Firestore backed
@@ -864,6 +987,7 @@ async function startShift() {
       saleIds: [], notes, closeNotes: null,
     };
     DB.shifts.unshift(activeShift);
+    writeLog('shift_started', { shiftId:ref.id, openCash:cash });
     closeM('m-startshift'); updateShiftIndicator();
     toast('✅ Shift started — good luck, '+ME.name+'!', 'ok');
   } catch(e) { toast('Error: '+e.message,'err'); }
@@ -897,6 +1021,7 @@ async function endShift() {
     activeShift.endTime   = new Date().toISOString();
     activeShift.closeCash = cash;
     activeShift.closeNotes= notes;
+    writeLog('shift_ended', { closeCash:cash });
     activeShift = null;
     closeM('m-endshift'); updateShiftIndicator();
     toast('Shift ended. Have a good rest!','ok');
@@ -978,12 +1103,18 @@ function renderChips() {
 window.setCat = function(id,el) { catFilter=id; document.querySelectorAll('#chips .chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderGrid(); };
 function renderGrid() {
   const q    = (document.getElementById('psrch')?.value||'').toLowerCase();
+  const sort = document.getElementById('prod-sort')?.value||'';
   const grid = document.getElementById('prod-grid');
   const list = DB.products.filter(p => {
     const cOk = catFilter==='all'||p.cat===catFilter;
     const qOk = !q||p.name.toLowerCase().includes(q)||p.bar.toLowerCase().includes(q);
     return cOk&&qOk;
   });
+  if (sort==='name-az') list.sort((a,b)=>a.name.localeCompare(b.name));
+  else if (sort==='name-za') list.sort((a,b)=>b.name.localeCompare(a.name));
+  else if (sort==='price-lo') list.sort((a,b)=>a.price-b.price);
+  else if (sort==='price-hi') list.sort((a,b)=>b.price-a.price);
+  else if (sort==='stock-lo') list.sort((a,b)=>a.stock-b.stock);
   if (!list.length) { grid.innerHTML='<div class="no-prods">No products found.</div>'; return; }
   grid.innerHTML = list.map(p => {
     const cat  = getCat(p.cat);
@@ -1014,7 +1145,7 @@ function addToCart(pid) {
   if (p.stock===0) { toast(p.name+' is out of stock!','err'); return; }
   const row = cart.find(r=>r.pid===pid), cur = row?row.qty:0;
   if (cur>=p.stock) { toast('Only '+p.stock+' in stock!','warn'); return; }
-  if (row) row.qty++; else cart.push({pid,qty:1});
+  if (row) row.qty++; else cart.push({pid,qty:1,gift:false});
   renderCart(); toast(p.name+' added','ok');
 }
 window.changeQty = function(pid,delta) {
@@ -1023,6 +1154,11 @@ window.changeQty = function(pid,delta) {
   row.qty+=delta; if(row.qty<=0) cart.splice(cart.indexOf(row),1); renderCart();
 };
 window.removeItem = function(pid) { cart=cart.filter(r=>r.pid!==pid); renderCart(); };
+window.toggleGift = function(pid) {
+  const row=cart.find(r=>r.pid===pid); if(!row) return;
+  row.gift=!row.gift; renderCart();
+  toast(row.gift?'🎁 Item gifted (price set to 0)':'Gift removed','ok');
+};
 function clearCart() { cart=[]; dVal=0; document.getElementById('disc-val').value=''; document.getElementById('saved-lbl').textContent=''; renderCart(); }
 function renderCart() {
   const body = document.getElementById('cart-body');
@@ -1032,17 +1168,21 @@ function renderCart() {
   body.innerHTML = cart.map(row => {
     const p=getProd(row.pid); const imgH=p.img?`<img src="${p.img}" alt="">`:(p.emoji||'📦');
     const rem=p.stock-row.qty; const ss=rem<=0?'out':rem<=p.threshold?'warn':'ok';
-    return `<div class="ci">
+    const priceHtml = row.gift
+      ? `<div style="min-width:80px;text-align:right;flex-shrink:0"><div class="ci-price gifted">${fmt(p.price*row.qty)}</div><div style="font-size:11px;font-weight:700;color:var(--gr);font-family:'DM Mono',monospace">GIFT</div></div>`
+      : `<div class="ci-price">${fmt(p.price*row.qty)}</div>`;
+    return `<div class="ci${row.gift?' gifted-item':''}">
       <div class="ci-img">${imgH}</div>
       <div class="ci-info"><div class="ci-name">${p.name}</div><div class="ci-bar">${p.bar}</div><div class="ci-stock ${ss}">${rem<=0?'⚠ Last item!':'Left: '+rem}</div></div>
       <div class="qty-ctrl"><button class="qbtn" onclick="changeQty('${row.pid}',-1)">−</button><span class="qnum">${row.qty}</span><button class="qbtn" onclick="changeQty('${row.pid}',1)">+</button></div>
-      <div class="ci-price">${fmt(p.price*row.qty)}</div>
+      ${priceHtml}
+      <button class="ci-gift${row.gift?' active':''}" onclick="toggleGift('${row.pid}')" title="${row.gift?'Remove gift':'Mark as gift'}">🎁</button>
       <button class="ci-rm" onclick="removeItem('${row.pid}')">×</button>
     </div>`;
   }).join('');
   document.getElementById('co-btn').disabled=false; updateTotals();
 }
-function getSubtotal() { return cart.reduce((s,r)=>{const p=getProd(r.pid);return s+(p?p.price*r.qty:0);},0); }
+function getSubtotal() { return cart.reduce((s,r)=>{const p=getProd(r.pid);return s+(p&&!r.gift?p.price*r.qty:0);},0); }
 function getTotal()    { const sub=getSubtotal(); if(!dVal) return sub; return dType==='pct'?sub*(1-Math.min(dVal,100)/100):Math.max(0,sub-dVal); }
 function updateTotals() {
   const sub=getSubtotal(),total=getTotal(),saved=sub-total;
@@ -1054,51 +1194,70 @@ window.setDT = function(t) { dType=t; document.getElementById('dbt-pct').classLi
 window.applyDisc = function() { dVal=parseFloat(document.getElementById('disc-val').value)||0; updateTotals(); toast('Discount applied','ok'); };
 
 // ══════════════════════════════════════════
-// CHECKOUT — saves sale to Firestore
+// CHECKOUT — payment method → save sale
 // ══════════════════════════════════════════
-async function doCheckout() {
+function doCheckout() {
   if (!cart.length) return;
+  // Build payment method buttons and open modal
+  const grid = document.getElementById('payment-methods-grid');
+  if (!DB.paymentMethods.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:16px;text-align:center;color:var(--tx3);font-size:13px;">No payment methods yet.<br>Go to <strong>⚙️ Settings</strong> to add them.</div>`;
+    openM('m-payment'); return;
+  }
+  const methods = DB.paymentMethods;
+  grid.innerHTML = methods.map(m=>`
+    <button onclick="window.selectPayment('${m.id}','${(m.name||'').replace(/'/g,"\\'")}','${m.icon||'💳'}')"
+      style="padding:18px 8px;border:2px solid var(--bdr);border-radius:var(--r);background:var(--sur);font-size:13px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s;"
+      onmouseover="this.style.borderColor='var(--gr)';this.style.background='var(--gr-l)'"
+      onmouseout="this.style.borderColor='var(--bdr)';this.style.background='var(--sur)'">
+      <span style="font-size:28px">${m.icon||'💳'}</span>${m.name}
+    </button>`).join('');
+  openM('m-payment');
+}
+window.selectPayment = async function(pmId, pmName, pmIcon) {
+  closeM('m-payment');
   const sub=getSubtotal(), total=getTotal();
   showLoading('Processing sale...');
   try {
     const saleData = {
-      date:        serverTimestamp(),
-      cashier:     ME.name,
-      cashierId:   ME.id,
-      shiftId:     activeShift?activeShift.id:null,
-      customerId:  selectedCustomer?selectedCustomer.id:null,
-      customerName:selectedCustomer?selectedCustomer.name:null,
-      items: cart.map(r=>{ const p=getProd(r.pid); return{name:p.name,bar:p.bar,price:p.price,cost:p.cost,qty:r.qty,line:p.price*r.qty}; }),
+      date:         serverTimestamp(),
+      cashier:      ME.name,
+      cashierId:    ME.id,
+      shiftId:      activeShift?activeShift.id:null,
+      customerId:   selectedCustomer?selectedCustomer.id:null,
+      customerName: selectedCustomer?selectedCustomer.name:null,
+      items: cart.map(r=>{ const p=getProd(r.pid); const effectivePrice=r.gift?0:p.price; return{name:p.name,bar:p.bar,price:effectivePrice,cost:r.gift?0:p.cost,qty:r.qty,line:effectivePrice*r.qty,gift:r.gift||false}; }),
       subtotal:sub, discount:sub-total, total,
+      note: (document.getElementById('sale-note')?.value||'').trim()||null,
+      paymentMethod: pmName, paymentMethodId: pmId, paymentIcon: pmIcon,
     };
     const saleRef = await addDoc(COL.sales(), saleData);
-    // Deduct stock in Firestore
     await Promise.all(cart.map(r => {
       const p = getProd(r.pid);
       if (p) return updateDoc(doc(db,'products',r.pid), { stock: Math.max(0, p.stock-r.qty) });
     }));
-    // Add sale to active shift
     if (activeShift) {
       activeShift.saleIds.push(saleRef.id);
       await updateDoc(doc(db,'shifts',activeShift.id), { saleIds: activeShift.saleIds });
     }
-    // Low stock warnings
     cart.map(r=>getProd(r.pid)).filter(p=>p&&stockStatus(p)!=='ok').forEach(p=>{
       if(p.stock===0) toast('⚠ '+p.name+' OUT OF STOCK!','err');
       else toast('⚠ '+p.name+' LOW: '+p.stock+' left','warn');
     });
     const sale = { id:saleRef.id, ...saleData, date: new Date().toISOString() };
+    writeLog('sale_created', { saleId:saleRef.id, total, paymentMethod:pmName, items:saleData.items.length });
+    const noteEl=document.getElementById('sale-note'); if(noteEl) noteEl.value='';
     selectedCustomer=null; clearCustomer(); renderGrid();
     hideLoading();
     showReceipt(sale, true);
   } catch(e) { hideLoading(); toast('Error: '+e.message,'err'); }
-}
+};
 
 // ══════════════════════════════════════════
 // RECEIPT
 // ══════════════════════════════════════════
 function showReceipt(s, isNew) {
-  const rows = s.items.map(i=>`<div class="rrow"><span>${i.name} ×${i.qty}</span><span>${fmt(i.line)}</span></div>`).join('');
+  const rows = s.items.map(i=>`<div class="rrow"><span>${i.name} ×${i.qty}${i.gift?` <span style="background:var(--gr-l);color:var(--gr);font-size:9px;font-weight:700;padding:1px 5px;border-radius:5px;vertical-align:middle">GIFT</span>`:''}</span><span>${i.gift?'<span style="color:var(--gr);font-weight:700">FREE</span>':fmt(i.line)}</span></div>`).join('');
   const sh   = s.shiftId ? DB.shifts.find(x=>x.id===s.shiftId) : null;
   document.getElementById('receipt-body').innerHTML=`<div class="receipt">
     <div class="rh"><strong>Shathriat — شذريات</strong><br>
@@ -1112,6 +1271,8 @@ function showReceipt(s, isNew) {
     ${s.discount>0?`<div class="rrow"><span>Discount</span><span>-${fmt(s.discount)}</span></div>`:''}
     <hr class="rdiv">
     <div class="rrow rtotal"><span>TOTAL</span><span>${fmt(s.total)}</span></div>
+    ${s.paymentMethod?`<hr class="rdiv"><div class="rrow" style="color:var(--tx2);font-size:12px"><span>${s.paymentIcon||'💳'} Payment</span><span style="font-weight:700">${s.paymentMethod}</span></div>`:''}
+    ${s.note?`<hr class="rdiv"><div style="font-size:11px;color:var(--tx2);font-style:italic;padding:2px 0">📝 ${s.note}</div>`:''}
   </div>`;
 
   const closeBtn = document.getElementById('receipt-close-btn');
@@ -1190,14 +1351,19 @@ function renderReports() {
   const cost=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+(i.cost||0)*i.qty,0),0);
   const profit=rev-cost;
   const items=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+i.qty,0),0);
+  // Payment method breakdown
+  const pmBreakdown={};
+  sales.forEach(s=>{const k=s.paymentMethod||'Unspecified';if(!pmBreakdown[k])pmBreakdown[k]={total:0,count:0,icon:s.paymentIcon||'💳'};pmBreakdown[k].total+=s.total;pmBreakdown[k].count++;});
+  const pmCards=Object.entries(pmBreakdown).map(([k,v])=>`<div class="stat-card"><div class="slbl">${v.icon} ${k}</div><div class="sval" style="font-size:15px">${fmt(v.total)}</div><div class="ssub">${v.count} sale${v.count!==1?'s':''}</div></div>`).join('');
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card"><div class="slbl">Revenue</div><div class="sval">${fmt(rev)}</div><div class="ssub">${sales.length} transactions</div></div>
     <div class="stat-card"><div class="slbl">Cost</div><div class="sval">${fmt(cost)}</div></div>
     <div class="stat-card"><div class="slbl">Profit</div><div class="sval" style="color:var(--gr)">${fmt(profit)}</div><div class="ssub">${rev>0?(profit/rev*100).toFixed(1)+'% margin':'—'}</div></div>
-    <div class="stat-card"><div class="slbl">Items Sold</div><div class="sval">${items}</div></div>`;
+    <div class="stat-card"><div class="slbl">Items Sold</div><div class="sval">${items}</div></div>
+    ${pmCards}`;
   if(!sales.length){document.getElementById('rep-tbl').innerHTML='<div style="padding:28px;text-align:center;color:var(--tx3)">No sales in this period.</div>';return;}
   document.getElementById('rep-tbl').innerHTML=`<table>
-    <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Cashier</th><th>Shift</th><th>Customer</th><th>Items</th><th>Discount</th><th>Total</th><th></th></tr></thead>
+    <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Cashier</th><th>Payment</th><th>Customer</th><th>Items</th><th>Discount</th><th>Total</th><th></th></tr></thead>
     <tbody>${[...sales].map(s=>{
       const sid=s.id.slice(-6);
       return `<tr class="rep-row-clickable" onclick="window.openSaleById('${s.id}')">
@@ -1205,7 +1371,7 @@ function renderReports() {
         <td style="font-size:12px">${fmtD(s.date)}</td>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)">${fmtT(s.date)}</td>
         <td>${s.cashier}</td>
-        <td style="color:var(--tx3);font-size:11px">${s.shiftId?'✓':'—'}</td>
+        <td style="font-size:12px">${s.paymentMethod?`${s.paymentIcon||'💳'} ${s.paymentMethod}`:'<span style="color:var(--tx3)">—</span>'}</td>
         <td>${s.customerName||'<span style="color:var(--tx3)">Walk-in</span>'}</td>
         <td>${s.items.reduce((a,i)=>a+i.qty,0)}</td>
         <td style="font-family:'DM Mono',monospace;color:var(--or)">${s.discount>0?'-'+fmt(s.discount):'—'}</td>
@@ -1258,12 +1424,28 @@ function renderCatsList() {
       </div></div>`).join('');
 }
 window.setMgmtCat = function(id){mgmtCat=id;renderMgmt();};
+let _ptSort={col:null,dir:1};
+function _sortedProds(prods){
+  if(!_ptSort.col) return prods;
+  return [...prods].sort((a,b)=>{
+    let av,bv;
+    if(_ptSort.col==='name'){av=a.name.toLowerCase();bv=b.name.toLowerCase();return _ptSort.dir*(av<bv?-1:av>bv?1:0);}
+    if(_ptSort.col==='bar'){av=(a.bar||'').toLowerCase();bv=(b.bar||'').toLowerCase();return _ptSort.dir*(av<bv?-1:av>bv?1:0);}
+    if(_ptSort.col==='price'){return _ptSort.dir*((a.price||0)-(b.price||0));}
+    if(_ptSort.col==='stock'){return _ptSort.dir*((a.stock||0)-(b.stock||0));}
+    if(_ptSort.col==='cat'){av=(getCat(a.cat)?.name||'').toLowerCase();bv=(getCat(b.cat)?.name||'').toLowerCase();return _ptSort.dir*(av<bv?-1:av>bv?1:0);}
+    return 0;
+  });
+}
+window.ptSortBy=function(col){if(_ptSort.col===col)_ptSort.dir*=-1;else{_ptSort.col=col;_ptSort.dir=1;}renderProdTable();};
+function _thSort(col,label){const active=_ptSort.col===col;const arrow=active?(_ptSort.dir===1?' ▲':' ▼'):'';return `<th style="cursor:pointer;user-select:none;${active?'color:var(--gr);':''}" onclick="ptSortBy('${col}')">${label}${arrow}</th>`;}
 function renderProdTable() {
   const wrap=document.getElementById('prod-tbl-wrap');
-  const prods=mgmtCat?DB.products.filter(p=>p.cat===mgmtCat):DB.products;
+  const raw=mgmtCat?DB.products.filter(p=>p.cat===mgmtCat):DB.products;
+  const prods=_sortedProds(raw);
   if(!prods.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--tx3)">No products here yet.</div>';return;}
   wrap.innerHTML=`<table>
-    <thead><tr><th></th><th>Name</th><th>Barcode</th><th>Price</th><th>Stock</th><th>Category</th><th>Actions</th></tr></thead>
+    <thead><tr><th></th>${_thSort('name','Name')}${_thSort('bar','Barcode')}${_thSort('price','Price')}${_thSort('stock','Stock')}${_thSort('cat','Category')}<th>Actions</th></tr></thead>
     <tbody>${prods.map(p=>{
       const cat=getCat(p.cat);const imgH=p.img?`<img src="${p.img}" alt="">`:(p.emoji||'📦');
       const ss=stockStatus(p);const cls=ss==='out'?'stock-cell-out':ss==='warn'?'stock-cell-warn':'stock-cell-ok';
@@ -1304,7 +1486,7 @@ window.addCat = guard(async function(){
     DB.cats.sort((a,b)=>a.name.localeCompare(b.name));
     document.getElementById('nc-name').value='';
     closeM('m-addcat');renderMgmt();renderChips();
-    toast('Category added','ok');
+    writeLog('category_added',{name}); toast('Category added','ok');
   }catch(e){toast('Error: '+e.message,'err');}
   hideLoading();
 });
@@ -1313,13 +1495,13 @@ window.saveCat=async function(){
   const id=document.getElementById('ec-id').value;
   const name=document.getElementById('ec-name').value.trim();if(!name)return;
   showLoading('Saving...');
-  try{await updateDoc(doc(db,'categories',id),{name});const c=getCat(id);if(c)c.name=name;closeM('m-editcat');renderMgmt();renderChips();toast('Category renamed','ok');}
+  try{await updateDoc(doc(db,'categories',id),{name});const c=getCat(id);if(c)c.name=name;closeM('m-editcat');renderMgmt();renderChips();writeLog('category_renamed',{id,name});toast('Category renamed','ok');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 window.deleteCat=async function(id){
   if(!confirm('Delete category? Products become uncategorized.'))return;
   showLoading('Deleting...');
-  try{await deleteDoc(doc(db,'categories',id));DB.cats=DB.cats.filter(c=>c.id!==id);DB.products.forEach(p=>{if(p.cat===id)p.cat=null;});if(mgmtCat===id)mgmtCat=null;renderMgmt();renderChips();toast('Category deleted','err');}
+  try{await deleteDoc(doc(db,'categories',id));DB.cats=DB.cats.filter(c=>c.id!==id);DB.products.forEach(p=>{if(p.cat===id)p.cat=null;});if(mgmtCat===id)mgmtCat=null;renderMgmt();renderChips();writeLog('category_deleted',{id});toast('Category deleted','err');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 window.addProd=async function(){
@@ -1334,7 +1516,7 @@ window.addProd=async function(){
   if(!name||!bar){toast('Name and barcode required','err');return;}
   if(DB.products.find(p=>p.bar===bar)){toast('Barcode already exists','err');return;}
   showLoading('Saving...');
-  try{const ref=await addDoc(COL.products(),{name,bar,price,cost:0,cat,emoji,img,stock,threshold});DB.products.push({id:ref.id,name,bar,price,cost:0,cat,emoji,img,stock,threshold});['np-name','np-bar','np-price','np-emoji','np-stock','np-threshold'].forEach(id=>document.getElementById(id).value='');const prev=document.getElementById('np-prev');prev.innerHTML='';delete prev.dataset.src;closeM('m-addprod');renderMgmt();renderGrid();renderChips();toast('Product added','ok');}
+  try{const ref=await addDoc(COL.products(),{name,bar,price,cost:0,cat,emoji,img,stock,threshold});DB.products.push({id:ref.id,name,bar,price,cost:0,cat,emoji,img,stock,threshold});['np-name','np-bar','np-price','np-emoji','np-stock','np-threshold'].forEach(id=>document.getElementById(id).value='');const prev=document.getElementById('np-prev');prev.innerHTML='';delete prev.dataset.src;closeM('m-addprod');renderMgmt();renderGrid();renderChips();writeLog('product_added',{id:ref.id,name,price,stock});toast('Product added','ok');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 // ── Product & Category Excel Export ──
@@ -1400,13 +1582,13 @@ window.saveProd=async function(){
   const id=document.getElementById('ep-id').value;const p=getProd(id);if(!p)return;
   const updates={name:document.getElementById('ep-name').value.trim()||p.name,bar:document.getElementById('ep-bar').value.trim()||p.bar,price:parseFloat(document.getElementById('ep-price').value)||p.price,cat:document.getElementById('ep-cat').value||null,emoji:document.getElementById('ep-emoji').value.trim(),stock:parseInt(document.getElementById('ep-stock').value)||0,threshold:parseInt(document.getElementById('ep-threshold').value)||0};
   showLoading('Saving...');
-  try{await updateDoc(doc(db,'products',id),updates);Object.assign(p,updates);closeM('m-editprod');renderMgmt();renderGrid();toast('Product updated','ok');}
+  try{await updateDoc(doc(db,'products',id),updates);Object.assign(p,updates);closeM('m-editprod');renderMgmt();renderGrid();writeLog('product_updated',{id,updates});toast('Product updated','ok');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 window.deleteProd=async function(id){
   if(!confirm('Delete this product?'))return;
   showLoading('Deleting...');
-  try{await deleteDoc(doc(db,'products',id));DB.products=DB.products.filter(p=>p.id!==id);renderMgmt();renderGrid();toast('Deleted','err');}
+  try{const _dp=getProd(id);await deleteDoc(doc(db,'products',id));DB.products=DB.products.filter(p=>p.id!==id);renderMgmt();renderGrid();writeLog('product_deleted',{id,name:_dp?.name});toast('Deleted','err');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 
@@ -1482,7 +1664,7 @@ window.adjStock=async function(pid,delta){
 };
 window.setStock=async function(pid){
   const p=getProd(pid);const val=parseInt(document.getElementById('sadj-'+pid)?.value)||0;if(!p)return;
-  try{await updateDoc(doc(db,'products',pid),{stock:Math.max(0,val)});p.stock=Math.max(0,val);renderStock();renderGrid();toast('Stock updated','ok');}
+  try{const _oldStock=p.stock;await updateDoc(doc(db,'products',pid),{stock:Math.max(0,val)});p.stock=Math.max(0,val);renderStock();renderGrid();writeLog('stock_updated',{productId:pid,name:p.name,from:_oldStock,to:p.stock});toast('Stock updated','ok');}
   catch(e){toast('Error: '+e.message,'err');}
 };
 
@@ -1527,31 +1709,51 @@ window.clearCustomer=function(){
 };
 // ══════════════════════════════════════════
 // BARCODE SCANNER — Global keystroke capture
+// Scanners fire characters in < 30ms intervals then send Enter.
+// We use timing to tell a scan apart from human typing, so it
+// works even when the search box or another input has focus.
 // ══════════════════════════════════════════
-let barBuffer = '';
+let barBuffer  = '';
+let barLastKey = 0;
 let barTimeout = null;
+const BAR_SPEED = 50;  // ms — gaps smaller than this = scanner
+const BAR_MIN   = 3;   // minimum chars to be treated as a barcode
 
 document.addEventListener('keydown', e => {
-  // Don't capture if user is typing in an input/textarea/select
-  const tag = document.activeElement?.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-  
-  // Only capture printable characters and Enter
-  if (e.key === 'Enter' && barBuffer.length >= 3) {
-    e.preventDefault();
-    doScan(barBuffer);
-    barBuffer = '';
-    clearTimeout(barTimeout);
+  // Ignore non-printable keys except Enter
+  if (e.key.length > 1 && e.key !== 'Enter') return;
+  // Don't intercept when a modal is open
+  if (document.activeElement?.closest?.('.modal-bg.open')) return;
+
+  const now = Date.now();
+  const gap = now - barLastKey;
+  barLastKey = now;
+
+  if (e.key === 'Enter') {
+    if (barBuffer.length >= BAR_MIN && gap < BAR_SPEED * 4) {
+      // Looks like the end of a barcode scan
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const code = barBuffer;
+      barBuffer = '';
+      clearTimeout(barTimeout);
+      // Clear scanner chars that leaked into the search box
+      const srch = document.getElementById('psrch');
+      if (srch && document.activeElement === srch) { srch.value = ''; renderGrid(); }
+      doScan(code);
+    }
     return;
   }
-  
-  if (e.key.length === 1) { // printable character
+
+  if (e.key.length === 1) {
+    // Long gap means human started typing — reset unless this is
+    // the very first char of a new sequence
+    if (gap > 200 && barBuffer.length > 0) barBuffer = '';
     barBuffer += e.key;
     clearTimeout(barTimeout);
-    // Reset buffer after 100ms of no input (scanner types fast)
-    barTimeout = setTimeout(() => { barBuffer = ''; }, 100);
+    barTimeout = setTimeout(() => { barBuffer = ''; }, 300);
   }
-});
+}, true); // capture phase — runs before input handlers
 document.addEventListener('click',e=>{const w=document.getElementById('cust-pick-bar');if(w&&!w.contains(e.target)){const r=document.getElementById('cust-results');if(r)r.style.display='none';}});
 window.addCustomer=async function(){
   const name=document.getElementById('nc-cname').value.trim();
@@ -1560,7 +1762,7 @@ window.addCustomer=async function(){
   const discount=parseInt(document.getElementById('nc-cdisc').value)||0;
   if(!name){toast('Name is required','err');return;}
   showLoading('Saving...');
-  try{const ref=await addDoc(COL.customers(),{name,phone,notes,discount,since:new Date().toISOString().slice(0,10)});DB.customers.push({id:ref.id,name,phone,notes,discount,since:new Date().toISOString().slice(0,10)});DB.customers.sort((a,b)=>a.name.localeCompare(b.name));['nc-cname','nc-cphone','nc-cnotes','nc-cdisc'].forEach(id=>document.getElementById(id).value='');closeM('m-addcust');renderCustomers();toast('Customer added: '+name,'ok');}
+  try{const ref=await addDoc(COL.customers(),{name,phone,notes,discount,since:new Date().toISOString().slice(0,10)});DB.customers.push({id:ref.id,name,phone,notes,discount,since:new Date().toISOString().slice(0,10)});DB.customers.sort((a,b)=>a.name.localeCompare(b.name));['nc-cname','nc-cphone','nc-cnotes','nc-cdisc'].forEach(id=>document.getElementById(id).value='');closeM('m-addcust');renderCustomers();writeLog('customer_added',{id:ref.id,name,phone});toast('Customer added: '+name,'ok');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 window.openEditCust=function(id){const c=getCust(id);if(!c)return;document.getElementById('ec-cname').value=c.name;document.getElementById('ec-cphone').value=c.phone||'';document.getElementById('ec-cnotes').value=c.notes||'';document.getElementById('ec-cdisc').value=c.discount||0;document.getElementById('ec-cid').value=id;openM('m-editcust');};
@@ -1568,19 +1770,25 @@ window.saveCustomer=async function(){
   const id=document.getElementById('ec-cid').value;const c=getCust(id);if(!c)return;
   const updates={name:document.getElementById('ec-cname').value.trim()||c.name,phone:document.getElementById('ec-cphone').value.trim(),notes:document.getElementById('ec-cnotes').value.trim(),discount:parseInt(document.getElementById('ec-cdisc').value)||0};
   showLoading('Saving...');
-  try{await updateDoc(doc(db,'customers',id),updates);Object.assign(c,updates);if(selectedCustomer&&selectedCustomer.id===id){selectedCustomer=c;showCustTag(c);if(c.discount>0){dVal=c.discount;document.getElementById('disc-val').value=c.discount;updateTotals();}}closeM('m-editcust');renderCustomers();toast('Customer updated','ok');}
+  try{await updateDoc(doc(db,'customers',id),updates);Object.assign(c,updates);if(selectedCustomer&&selectedCustomer.id===id){selectedCustomer=c;showCustTag(c);if(c.discount>0){dVal=c.discount;document.getElementById('disc-val').value=c.discount;updateTotals();}}closeM('m-editcust');renderCustomers();writeLog('customer_updated',{id,name:c.name});toast('Customer updated','ok');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 window.deleteCustomer=async function(id){
   if(!confirm('Remove this customer? Sales history is kept.'))return;
   showLoading('Deleting...');
-  try{await deleteDoc(doc(db,'customers',id));DB.customers=DB.customers.filter(c=>c.id!==id);if(selectedCustomer&&selectedCustomer.id===id)window.clearCustomer();renderCustomers();toast('Customer removed','err');}
+  try{const _dc=getCust(id);await deleteDoc(doc(db,'customers',id));DB.customers=DB.customers.filter(c=>c.id!==id);if(selectedCustomer&&selectedCustomer.id===id)window.clearCustomer();renderCustomers();writeLog('customer_deleted',{id,name:_dc?.name});toast('Customer removed','err');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
 function renderCustomers(){
   const q=(document.getElementById('cust-srch')?.value||'').toLowerCase();
+  const sort=(document.getElementById('cust-sort')?.value||'');
   const grid=document.getElementById('cust-grid');
   const list=DB.customers.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.phone&&c.phone.includes(q)));
+  if (sort==='name-az') list.sort((a,b)=>a.name.localeCompare(b.name));
+  else if (sort==='name-za') list.sort((a,b)=>b.name.localeCompare(a.name));
+  else if (sort==='phone') list.sort((a,b)=>(a.phone||'').localeCompare(b.phone||''));
+  else if (sort==='spent-hi') list.sort((a,b)=>DB.sales.filter(s=>s.customerId===b.id).reduce((x,s)=>x+s.total,0)-DB.sales.filter(s=>s.customerId===a.id).reduce((x,s)=>x+s.total,0));
+  else if (sort==='visits-hi') list.sort((a,b)=>DB.sales.filter(s=>s.customerId===b.id).length-DB.sales.filter(s=>s.customerId===a.id).length);
   if(!list.length){grid.innerHTML='<div style="color:var(--tx3);padding:28px;grid-column:1/-1;text-align:center">No customers found.</div>';return;}
   const colors=['#2D6A4F','#3557D9','#E9762B','#7C3AED','#0E7490','#B45309'];
   grid.innerHTML=list.map(c=>{
@@ -1754,6 +1962,7 @@ function wireAllButtons() {
   wireBtn('btn-apply-disc',  () => window.applyDisc());
   wireBtn('btn-clear-cart',  () => clearCart());
   wireBtn('co-btn',          () => doCheckout());
+  wireBtn('payment-cancel-btn', () => closeM('m-payment'));
 
   // Products view
   wireBtn('btn-addcat',  () => openM('m-addcat'));
