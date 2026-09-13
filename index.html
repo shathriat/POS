@@ -6,6 +6,7 @@
 <title>Shathriat</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 <style>
 :root{--bg:#F7F6F3;--sur:#fff;--sur2:#F0EFE9;--bdr:#E2E0D8;--tx:#1A1916;--tx2:#6B6860;--tx3:#9E9C96;--gr:#2D6A4F;--gr-l:#E8F4F0;--or:#E9762B;--or-l:#FEF3EA;--re:#C0392B;--re-l:#FDECEA;--amber:#B45309;--amber-l:#FEF3C7;--sh:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);--sh-lg:0 8px 32px rgba(0,0,0,.13);--r:12px;--rs:8px;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -302,6 +303,29 @@ tbody tr:hover{background:var(--sur2);}
 .modal h3{font-size:16px;font-weight:700;margin-bottom:3px;}
 .modal-sub{font-size:12px;color:var(--tx2);margin-bottom:16px;}
 .modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+/* LABELS */
+.lbl-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--bdr);}
+.lbl-row:last-child{border-bottom:none;}
+.lbl-row .td-img{width:32px;height:32px;flex-shrink:0;}
+.lbl-qty{width:60px;padding:5px 6px;text-align:center;flex-shrink:0;}
+.label{width:62mm;height:37mm;box-sizing:border-box;background:#fff;border:1px dashed #bbb;border-radius:2mm;padding:2.5mm 3.5mm;display:flex;flex-direction:column;justify-content:space-between;font-family:'DM Sans',sans-serif;color:#111;overflow:hidden;}
+.label-top{display:flex;align-items:center;justify-content:space-between;gap:2mm;}
+.label-brand{font-size:9px;font-weight:700;white-space:nowrap;letter-spacing:.2px;}
+.label-logo{width:9mm;height:9mm;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.label-logo svg,.label-logo img{width:100%;height:100%;object-fit:contain;}
+.label-mid{display:flex;align-items:flex-end;justify-content:space-between;gap:2mm;}
+.label-price{font-size:16px;font-weight:800;white-space:nowrap;}
+.label-name{font-size:10px;font-weight:600;text-align:right;line-height:1.25;max-width:32mm;}
+.label-bc{width:100%;height:12mm;display:block;}
+#label-print-root{display:none;}
+@media print{
+  body.printing-labels *{visibility:hidden;}
+  body.printing-labels #label-print-root,
+  body.printing-labels #label-print-root *{visibility:visible;}
+  body.printing-labels{overflow:visible!important;height:auto!important;}
+  body.printing-labels #label-print-root{display:grid!important;position:absolute;top:0;left:0;width:100%;grid-template-columns:repeat(var(--lbl-cols,3),1fr);gap:3mm;padding:4mm;}
+  .label{break-inside:avoid;page-break-inside:avoid;}
+}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .file-lbl{display:inline-block;padding:7px 11px;border:1.5px dashed var(--bdr);border-radius:var(--rs);font-size:12px;color:var(--tx3);cursor:pointer;margin-top:3px;}
 .file-lbl:hover{border-color:var(--gr);color:var(--gr);}
@@ -403,7 +427,7 @@ tbody tr:hover{background:var(--sur2);}
     </div>
     <!-- PRODUCTS -->
     <div class="view" id="v-products">
-      <div class="view-hdr"><h2>Products &amp; Categories</h2><div style="display:flex;gap:6px"><button class="btn-excel" id="btn-export-products">📊 Export Products</button><button class="btn-s" id="btn-addcat">+ Category</button><button class="btn-p" id="btn-addprod">+ Product</button></div></div>
+      <div class="view-hdr"><h2>Products &amp; Categories</h2><div style="display:flex;gap:6px"><button class="btn-excel" id="btn-export-products">📊 Export Products</button><button class="btn-s" id="btn-print-labels">🏷️ Print Labels</button><button class="btn-s" id="btn-addcat">+ Category</button><button class="btn-p" id="btn-addprod">+ Product</button></div></div>
       <div class="prod-mgmt"><div class="cats-panel"><div class="cats-panel-hdr">Categories</div><div class="cats-list" id="cats-list"></div></div><div class="prod-tbl-wrap" id="prod-tbl-wrap"></div></div>
     </div>
     <!-- COSTS -->
@@ -517,6 +541,23 @@ tbody tr:hover{background:var(--sur2);}
     <div class="fl" style="margin-top:10px"><label>Emoji</label><input class="fi" id="ep-emoji"></div>
     <input type="hidden" id="ep-id">
     <div class="modal-foot"><button class="btn-s" id="btn-cancel-editprod">Cancel</button><button class="btn-p" id="btn-do-saveprod">Save</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="m-labels">
+  <div class="modal" style="max-width:640px">
+    <h3>🏷️ Print Labels</h3>
+    <div class="modal-sub">Select products and quantities, then print barcode labels</div>
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="lbl-selall">Select all</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2)">Columns/row
+        <select id="lbl-cols" class="fi" style="width:56px;padding:5px"><option>2</option><option selected>3</option><option>4</option></select>
+      </label>
+      <label class="file-lbl" for="lbl-logo-file" style="margin-left:auto">🖼️ Custom logo</label>
+      <input type="file" id="lbl-logo-file" accept="image/*" style="display:none">
+      <button class="btn-s" id="lbl-logo-reset" style="padding:5px 9px;font-size:11px">Reset logo</button>
+    </div>
+    <div id="lbl-list" style="max-height:360px;overflow-y:auto;border:1px solid var(--bdr);border-radius:var(--rs)"></div>
+    <div class="modal-foot"><button class="btn-s" id="btn-cancel-labels">Close</button><button class="btn-p" id="btn-do-printlabels">🖨 Print Labels</button></div>
   </div>
 </div>
 <div class="modal-bg" id="m-adduser">
@@ -1457,6 +1498,7 @@ function renderProdTable() {
         <td class="${cls}">${p.stock??0} <small style="font-weight:400;color:var(--tx3)">(alert@${p.threshold??0})</small></td>
         <td><span class="cat-tag">${cat?cat.name:'—'}</span></td>
         <td><div class="td-acts">
+          <button class="btn-s" style="padding:4px 8px;font-size:11px" onclick="openLabels('${p.id}')">🏷️</button>
           <button class="btn-s" style="padding:4px 8px;font-size:11px" onclick="openEditProd('${p.id}')">Edit</button>
           <button class="btn-d" onclick="deleteProd('${p.id}')">Del</button>
         </div></td>
@@ -1591,6 +1633,85 @@ window.deleteProd=async function(id){
   try{const _dp=getProd(id);await deleteDoc(doc(db,'products',id));DB.products=DB.products.filter(p=>p.id!==id);renderMgmt();renderGrid();writeLog('product_deleted',{id,name:_dp?.name});toast('Deleted','err');}
   catch(e){toast('Error: '+e.message,'err');}hideLoading();
 };
+
+// ══════════════════════════════════════════
+// PRODUCT LABELS (printable barcode stickers)
+// ══════════════════════════════════════════
+const LBL_LOGO_KEY = 'shathriat_label_logo';
+const LBL_LOGO_SVG = `<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" fill="#111">
+  <path d="M50 8 L8 34 L26 34 L50 20 L74 34 L92 34 Z"/>
+  <path d="M50 34 L14 56 L30 56 L50 44 L70 56 L86 56 Z"/>
+  <path d="M42 56 L50 72 L58 56 Z"/>
+</svg>`;
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function getLabelLogoHTML(){
+  const custom=localStorage.getItem(LBL_LOGO_KEY);
+  return custom?`<img src="${custom}" alt="">`:LBL_LOGO_SVG;
+}
+function labelHTMLString(p){
+  return `<div class="label">
+    <div class="label-top">
+      <div class="label-brand" dir="rtl">عطر الكتب</div>
+      <div class="label-logo">${getLabelLogoHTML()}</div>
+      <div class="label-brand" dir="rtl">شذريات</div>
+    </div>
+    <div class="label-mid">
+      <div class="label-price">${fmt(p.price)}</div>
+      <div class="label-name">${escapeHtml(p.name)}</div>
+    </div>
+    <svg class="label-bc" jsbarcode-value="${escapeHtml(p.bar)}" jsbarcode-format="CODE128" jsbarcode-displayvalue="true" jsbarcode-fontsize="10" jsbarcode-height="24" jsbarcode-margin="0" jsbarcode-textmargin="2"></svg>
+  </div>`;
+}
+function fillLabelList(onlyId){
+  const wrap=document.getElementById('lbl-list');
+  const prods=mgmtCat?DB.products.filter(p=>p.cat===mgmtCat):DB.products;
+  if(!prods.length){wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--tx3)">No products yet.</div>';return;}
+  wrap.innerHTML=prods.map(p=>{
+    const imgH=p.img?`<img src="${p.img}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`:(p.emoji||'📦');
+    const checked=onlyId?p.id===onlyId:false;
+    return `<div class="lbl-row">
+      <input type="checkbox" class="lbl-chk" data-id="${p.id}" ${checked?'checked':''}>
+      <div class="td-img">${imgH}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+        <div style="font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace">${p.bar}</div>
+      </div>
+      <input type="number" class="fi lbl-qty" data-id="${p.id}" min="0" step="1" value="${checked?1:0}">
+    </div>`;
+  }).join('');
+  document.getElementById('lbl-selall').checked=!!onlyId&&prods.length===1;
+}
+window.openLabels=function(onlyId){
+  fillLabelList(typeof onlyId==='string'?onlyId:null);
+  openM('m-labels');
+};
+window.lblToggleAll=function(v){
+  document.querySelectorAll('.lbl-chk').forEach(c=>{c.checked=v;});
+  document.querySelectorAll('.lbl-qty').forEach(i=>{if(v&&(!i.value||+i.value<1))i.value=1;});
+};
+window.printLabels=function(){
+  const rows=[...document.querySelectorAll('#lbl-list .lbl-row')];
+  let html='',count=0;
+  rows.forEach(r=>{
+    const chk=r.querySelector('.lbl-chk');if(!chk.checked)return;
+    const p=getProd(chk.dataset.id);if(!p)return;
+    const qty=Math.max(0,parseInt(r.querySelector('.lbl-qty').value)||0);
+    for(let i=0;i<qty;i++){html+=labelHTMLString(p);count++;}
+  });
+  if(!count){toast('Select at least one product with quantity > 0','err');return;}
+  const cols=document.getElementById('lbl-cols').value||'3';
+  const root=document.getElementById('label-print-root');
+  root.style.setProperty('--lbl-cols',cols);
+  root.innerHTML=html;
+  JsBarcode('.label-bc').init();
+  closeM('m-labels');
+  document.body.classList.add('printing-labels');
+  setTimeout(()=>window.print(),60);
+};
+window.addEventListener('afterprint',()=>{
+  document.body.classList.remove('printing-labels');
+  document.getElementById('label-print-root').innerHTML='';
+});
 
 // ══════════════════════════════════════════
 // COSTS
@@ -1968,6 +2089,20 @@ function wireAllButtons() {
   wireBtn('btn-addcat',  () => openM('m-addcat'));
   wireBtn('btn-addprod', () => window.openAddProd());
   wireBtn('btn-export-products', () => window.exportProducts());
+  wireBtn('btn-print-labels', () => window.openLabels());
+
+  // Label printing modal
+  wireBtn('btn-cancel-labels',   () => closeM('m-labels'));
+  wireBtn('btn-do-printlabels',  () => window.printLabels());
+  document.getElementById('lbl-selall')?.addEventListener('change', e => window.lblToggleAll(e.target.checked));
+  wireBtn('lbl-logo-reset', () => { localStorage.removeItem('shathriat_label_logo'); toast('Logo reset to default','ok'); });
+  document.getElementById('lbl-logo-file')?.addEventListener('change', function(){
+    const f=this.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=e=>{ localStorage.setItem('shathriat_label_logo', e.target.result); toast('Custom logo saved','ok'); };
+    r.readAsDataURL(f);
+    this.value='';
+  });
 
   // Category modals
   wireBtn('btn-cancel-addcat',  () => closeM('m-addcat'));
@@ -2229,5 +2364,6 @@ window.renderGrid=renderGrid;
 window.openAddProd=window.openAddProd;
 window.setRP=window.setRP;
 </script>
+<div id="label-print-root"></div>
 </body>
 </html>
