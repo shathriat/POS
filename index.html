@@ -369,6 +369,7 @@ tbody tr:hover{background:var(--sur2);}
         <button class="ntab active" id="nav-pos">🧾 POS</button>
         <button class="ntab" onclick="goView('products',this)" data-role="subadmin,admin">📦 Products</button>
         <button class="ntab" onclick="goView('costs',this)" data-role="admin">💰 Costs</button>
+        <button class="ntab" onclick="goView('expenses',this)" data-role="admin">💸 Expenses</button>
         <button class="ntab" onclick="goView('reports',this)" data-role="admin">📊 Reports</button>
         <button class="ntab" onclick="goView('shifts',this)" data-role="admin">⏱ Shifts</button>
         <button class="ntab" onclick="goView('stock',this)">🔔 Alerts</button>
@@ -435,6 +436,11 @@ tbody tr:hover{background:var(--sur2);}
       <div class="view-hdr"><h2>Cost Management</h2><span style="font-size:12px;color:var(--tx3)">Set cost to track profit</span></div>
       <div class="costs-wrap" id="costs-wrap"></div>
     </div>
+    <!-- EXPENSES -->
+    <div class="view" id="v-expenses" style="flex-direction:column;overflow:hidden;">
+      <div class="view-hdr"><h2>💸 Expenses</h2><button class="btn-p" id="btn-addexpense">+ Add Expense</button></div>
+      <div class="prod-tbl-wrap" id="expenses-wrap"></div>
+    </div>
     <!-- REPORTS -->
     <div class="view" id="v-reports">
       <div class="view-hdr"><h2>Reports &amp; Analytics</h2><button class="btn-excel" id="btn-export">📊 Export Excel</button></div>
@@ -455,6 +461,7 @@ tbody tr:hover{background:var(--sur2);}
         <div class="stats-grid" id="stats-grid"></div>
         <div class="rep-tbl" id="rep-tbl"></div>
         <div style="margin-top:8px;font-size:11px;color:var(--tx3);text-align:center">💡 Click any row to view the full receipt</div>
+        <div id="rep-separate-section" style="margin-top:22px;"></div>
       </div>
     </div>
     <!-- SHIFTS -->
@@ -523,6 +530,21 @@ tbody tr:hover{background:var(--sur2);}
 </div>
 <div class="modal-bg" id="m-addcat"><div class="modal"><h3>Add Category</h3><div class="modal-sub">Create a product category</div><div class="fl"><label>Name</label><input class="fi" id="nc-name" placeholder="e.g. Acrylic Paints"></div><div class="modal-foot"><button class="btn-s" id="btn-cancel-addcat">Cancel</button><button class="btn-p" id="btn-do-addcat">Add</button></div></div></div>
 <div class="modal-bg" id="m-editcat"><div class="modal"><h3>Rename Category</h3><div class="modal-sub">Enter new name</div><div class="fl"><label>Name</label><input class="fi" id="ec-name"></div><input type="hidden" id="ec-id"><div class="modal-foot"><button class="btn-s" id="btn-cancel-editcat">Cancel</button><button class="btn-p" id="btn-do-saveCat">Save</button></div></div></div>
+<div class="modal-bg" id="m-addexpense">
+  <div class="modal"><h3>Add Expense</h3><div class="modal-sub">Record a new expense</div>
+    <div class="frow"><div class="fl" style="margin:0"><label>Name *</label><input class="fi" id="ne-name" placeholder="e.g. Rent, Supplies..."></div><div class="fl" style="margin:0"><label>Price (IQD) *</label><input class="fi" id="ne-price" type="number" min="0" step="250" placeholder="e.g. 50000"></div></div>
+    <div class="fl" style="margin-top:10px"><label>Notes</label><input class="fi" id="ne-notes" placeholder="Optional notes..."></div>
+    <div class="modal-foot"><button class="btn-s" id="btn-cancel-addexpense">Cancel</button><button class="btn-p" id="btn-do-addexpense">Add Expense</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="m-editexpense">
+  <div class="modal"><h3>Edit Expense</h3><div class="modal-sub">Update expense details</div>
+    <div class="frow"><div class="fl" style="margin:0"><label>Name</label><input class="fi" id="ee-name"></div><div class="fl" style="margin:0"><label>Price (IQD)</label><input class="fi" id="ee-price" type="number" min="0" step="250"></div></div>
+    <div class="fl" style="margin-top:10px"><label>Notes</label><input class="fi" id="ee-notes"></div>
+    <input type="hidden" id="ee-id">
+    <div class="modal-foot"><button class="btn-s" id="btn-cancel-editexpense">Cancel</button><button class="btn-p" id="btn-do-saveexpense">Save</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="m-addprod">
   <div class="modal"><h3>Add Product</h3><div class="modal-sub">Add a new item to catalog</div>
     <div class="frow"><div class="fl" style="margin:0"><label>Name *</label><input class="fi" id="np-name" placeholder="Product name"></div><div class="fl" style="margin:0"><label>Barcode *</label><input class="fi" id="np-bar" placeholder="Barcode" style="font-family:'DM Mono',monospace"></div></div>
@@ -641,6 +663,7 @@ tbody tr:hover{background:var(--sur2);}
     <div class="fl"><label>Name *</label><input class="fi" id="npm-name" placeholder="e.g. FIB, Cash, Nass Pay..."></div>
     <div class="fl"><label>Icon (emoji)</label><input class="fi" id="npm-icon" placeholder="e.g. 💵 🏦 📱" style="font-size:18px;" maxlength="4"></div>
     <div class="fl"><label>Order (display position)</label><input class="fi" id="npm-order" type="number" min="1" placeholder="1, 2, 3..."></div>
+    <div class="fl"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-weight:600;color:var(--tx);font-size:13px"><input type="checkbox" id="npm-separate" style="width:auto"> Keep separate from daily report (e.g. delivery/courier)</label></div>
     <div class="modal-foot">
       <button class="btn-s" onclick="closeM('m-addpayment')">Cancel</button>
       <button class="btn-p" onclick="window.saveAddPayment()">Add</button>
@@ -698,6 +721,7 @@ const COL = {
   customers:      () => collection(db, 'customers'),
   users:          () => collection(db, 'users'),
   paymentMethods: () => collection(db, 'paymentMethods'),
+  expenses:       () => collection(db, 'expenses'),
   logs:           () => collection(db, 'logs'),
 };
 
@@ -727,7 +751,7 @@ function writeLog(action, details={}) {
 // ══════════════════════════════════════════
 // LOCAL STATE (populated from Firestore)
 // ══════════════════════════════════════════
-let DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[] };
+let DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[], expenses:[] };
 let ME = null;          // logged-in user profile (from Firestore users collection)
 let cart = [];
 let dType = 'pct', dVal = 0;
@@ -810,7 +834,7 @@ async function doLogout() {
   writeLog('logout');
   unsubs.forEach(u => u()); unsubs = [];
   cart = []; dVal = 0; selectedCustomer = null; activeShift = null; ME = null;
-  DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[] };
+  DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[], expenses:[] };
   await signOut(auth);
   document.getElementById('login-pg').classList.remove('hidden');
   document.getElementById('app').classList.remove('on');
@@ -862,13 +886,14 @@ onAuthStateChanged(auth, async fbUser => {
 // ══════════════════════════════════════════
 async function loadAllData() {
   showLoading('Syncing data...');
-  const [catsSnap, prodsSnap, salesSnap, shiftsSnap, custsSnap, pmSnap] = await Promise.all([
+  const [catsSnap, prodsSnap, salesSnap, shiftsSnap, custsSnap, pmSnap, expSnap] = await Promise.all([
     getDocs(query(COL.cats(),     orderBy('name'))),
     getDocs(query(COL.products(), orderBy('name'))),
     getDocs(query(COL.sales(),    orderBy('date', 'desc'))),
     getDocs(query(COL.shifts(),   orderBy('startTime', 'desc'))),
     getDocs(query(COL.customers(),orderBy('name'))),
     getDocs(COL.paymentMethods()),
+    getDocs(query(COL.expenses(), orderBy('date', 'desc'))),
   ]);
   DB.cats           = catsSnap.docs.map(d  => ({ id:d.id, ...d.data() }));
   DB.products       = prodsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -883,6 +908,10 @@ async function loadAllData() {
     endTime:   d.data().endTime ? tsToDate(d.data().endTime).toISOString() : null,
   }));
   DB.customers = custsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+  DB.expenses  = expSnap.docs.map(d => ({
+    id:d.id, ...d.data(),
+    date: tsToDate(d.data().date).toISOString(),
+  }));
   // Check for user's open shift
   activeShift = DB.shifts.find(s => s.cashierId===ME.id && !s.endTime) || null;
   updateShiftIndicator();
@@ -935,6 +964,7 @@ function goView(name, btn) {
   if (btn) btn.classList.add('active');
   if (name==='products')  renderMgmt();
   if (name==='costs')     renderCosts();
+  if (name==='expenses')  renderExpenses();
   if (name==='reports')   renderReports();
   if (name==='shifts')    renderShifts();
   if (name==='stock')     renderStock();
@@ -957,31 +987,50 @@ function renderSettings() {
   }
   empty.style.display = 'none';
   list.innerHTML = DB.paymentMethods.map(m => `
-    <div class="cost-row" style="justify-content:space-between;">
+    <div class="cost-row" style="justify-content:space-between;flex-wrap:wrap;">
       <span style="font-size:20px;min-width:28px">${m.icon||'💳'}</span>
-      <span style="flex:1;font-size:14px;font-weight:600;margin-left:8px">${m.name}</span>
+      <div style="flex:1;margin-left:8px;min-width:160px">
+        <div style="font-size:14px;font-weight:600">${m.name}</div>
+        <div style="font-size:11px;margin-top:2px;font-weight:700;${m.separate?'color:var(--or)':'color:var(--gr)'}">${m.separate?'🚚 Kept separate from daily report':'✓ Counted in daily report'}</div>
+      </div>
       <span style="font-size:11px;color:var(--tx3);margin-right:10px">order: ${m.order??'—'}</span>
+      <button style="padding:6px 12px;border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${m.separate?'var(--gr)':'var(--or)'};background:${m.separate?'var(--gr-l)':'var(--or-l)'};color:${m.separate?'var(--gr)':'var(--or)'}" onclick="window.toggleSeparatePayment('${m.id}')">${m.separate?'↩ Put back in report':'🚚 Keep separate'}</button>
       <button class="btn-d" onclick="window.deletePaymentMethod('${m.id}','${(m.name||'').replace(/'/g,"\\'")}')">Delete</button>
     </div>`).join('');
 }
 window.openAddPayment = function() {
   ['npm-name','npm-icon','npm-order'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('npm-separate').checked = false;
   openM('m-addpayment');
 };
 window.saveAddPayment = async function() {
   const name  = document.getElementById('npm-name').value.trim();
   const icon  = document.getElementById('npm-icon').value.trim() || '💳';
   const order = parseInt(document.getElementById('npm-order').value) || (DB.paymentMethods.length + 1);
+  const separate = document.getElementById('npm-separate').checked;
   if (!name) { toast('Name is required','err'); return; }
   showLoading('Saving...');
   try {
-    const ref = await addDoc(COL.paymentMethods(), { name, icon, order });
-    DB.paymentMethods.push({ id:ref.id, name, icon, order });
+    const ref = await addDoc(COL.paymentMethods(), { name, icon, order, separate });
+    DB.paymentMethods.push({ id:ref.id, name, icon, order, separate });
     DB.paymentMethods.sort((a,b)=>(a.order||99)-(b.order||99));
     closeM('m-addpayment');
     renderSettings();
-    writeLog('payment_method_added', { name, icon });
+    writeLog('payment_method_added', { name, icon, separate });
     toast('Payment method added: '+name, 'ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+};
+window.toggleSeparatePayment = async function(id) {
+  const m = DB.paymentMethods.find(x=>x.id===id); if (!m) return;
+  const separate = !m.separate;
+  showLoading('Saving...');
+  try {
+    await updateDoc(doc(db,'paymentMethods',id), { separate });
+    m.separate = separate;
+    renderSettings();
+    writeLog('payment_method_updated', { id, name:m.name, separate });
+    toast(separate?'"'+m.name+'" will now be kept separate from the daily report':'"'+m.name+'" is back in the daily report', 'ok');
   } catch(e) { toast('Error: '+e.message,'err'); }
   hideLoading();
 };
@@ -1392,24 +1441,14 @@ window.setRP = function(period,btn) {
   document.getElementById('rep-date-row').classList.toggle('show',period==='custom');
   renderReports();
 };
-function renderReports() {
-  const sales=getFilteredSales();
-  const rev=sales.reduce((s,sl)=>s+sl.total,0);
-  const cost=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+(i.cost||0)*i.qty,0),0);
-  const profit=rev-cost;
-  const items=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+i.qty,0),0);
-  // Payment method breakdown
-  const pmBreakdown={};
-  sales.forEach(s=>{const k=s.paymentMethod||'Unspecified';if(!pmBreakdown[k])pmBreakdown[k]={total:0,count:0,icon:s.paymentIcon||'💳'};pmBreakdown[k].total+=s.total;pmBreakdown[k].count++;});
-  const pmCards=Object.entries(pmBreakdown).map(([k,v])=>`<div class="stat-card"><div class="slbl">${v.icon} ${k}</div><div class="sval" style="font-size:15px">${fmt(v.total)}</div><div class="ssub">${v.count} sale${v.count!==1?'s':''}</div></div>`).join('');
-  document.getElementById('stats-grid').innerHTML=`
-    <div class="stat-card"><div class="slbl">Revenue</div><div class="sval">${fmt(rev)}</div><div class="ssub">${sales.length} transactions</div></div>
-    <div class="stat-card"><div class="slbl">Cost</div><div class="sval">${fmt(cost)}</div></div>
-    <div class="stat-card"><div class="slbl">Profit</div><div class="sval" style="color:var(--gr)">${fmt(profit)}</div><div class="ssub">${rev>0?(profit/rev*100).toFixed(1)+'% margin':'—'}</div></div>
-    <div class="stat-card"><div class="slbl">Items Sold</div><div class="sval">${items}</div></div>
-    ${pmCards}`;
-  if(!sales.length){document.getElementById('rep-tbl').innerHTML='<div style="padding:28px;text-align:center;color:var(--tx3)">No sales in this period.</div>';return;}
-  document.getElementById('rep-tbl').innerHTML=`<table>
+// A payment method flagged "separate" in Settings is excluded from the
+// main report totals and shown in its own section instead (e.g. delivery/courier).
+function isSeparateSale(s) {
+  const pm = DB.paymentMethods.find(m=>m.id===s.paymentMethodId) || DB.paymentMethods.find(m=>m.name===s.paymentMethod);
+  return !!(pm && pm.separate);
+}
+function _salesTableHTML(sales) {
+  return `<table>
     <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Cashier</th><th>Payment</th><th>Customer</th><th>Items</th><th>Discount</th><th>Total</th><th></th></tr></thead>
     <tbody>${[...sales].map(s=>{
       const sid=s.id.slice(-6);
@@ -1427,13 +1466,100 @@ function renderReports() {
       </tr>`;
     }).join('')}</tbody></table>`;
 }
+function _separateTableHTML(sales) {
+  return `<table>
+    <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Cashier</th><th>Payment</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th></th></tr></thead>
+    <tbody>${[...sales].map(s=>{
+      const sid=s.id.slice(-6);
+      return `<tr>
+        <td class="rep-row-clickable" style="font-family:'DM Mono',monospace;color:var(--tx3)" onclick="window.openSaleById('${s.id}')">#${sid}</td>
+        <td class="rep-row-clickable" style="font-size:12px" onclick="window.openSaleById('${s.id}')">${fmtD(s.date)}</td>
+        <td class="rep-row-clickable" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)" onclick="window.openSaleById('${s.id}')">${fmtT(s.date)}</td>
+        <td class="rep-row-clickable" onclick="window.openSaleById('${s.id}')">${s.cashier}</td>
+        <td class="rep-row-clickable" style="font-size:12px" onclick="window.openSaleById('${s.id}')">${s.paymentMethod?`${s.paymentIcon||'🚚'} ${s.paymentMethod}`:'<span style="color:var(--tx3)">—</span>'}</td>
+        <td class="rep-row-clickable" onclick="window.openSaleById('${s.id}')">${s.customerName||'<span style="color:var(--tx3)">Walk-in</span>'}</td>
+        <td class="rep-row-clickable" onclick="window.openSaleById('${s.id}')">${s.items.reduce((a,i)=>a+i.qty,0)}</td>
+        <td class="rep-row-clickable" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--gr)" onclick="window.openSaleById('${s.id}')">${fmt(s.total)}</td>
+        <td>${s.paid?'<span style="color:var(--gr);font-weight:700;font-size:11px">✓ Paid</span>':'<span style="color:var(--amber);font-weight:700;font-size:11px">Pending</span>'}</td>
+        <td>${s.paid?'':`<button class="btn-s" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();window.markSalePaid('${s.id}')">Mark Paid</button>`}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+window.markSalePaid = async function(id) {
+  const s = DB.sales.find(x=>x.id===id); if(!s) return;
+  showLoading('Saving...');
+  try {
+    await updateDoc(doc(db,'sales',id), { paid:true, paidBy:ME.name, paidAt:new Date().toISOString() });
+    s.paid=true; s.paidBy=ME.name; s.paidAt=new Date().toISOString();
+    renderReports();
+    writeLog('sale_marked_paid', { id, total:s.total, paymentMethod:s.paymentMethod });
+    toast('Marked as paid','ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+};
+window.markAllSeparatePaid = async function() {
+  const allSales=getFilteredSales();
+  const pending=allSales.filter(s=>isSeparateSale(s)&&!s.paid);
+  if(!pending.length){toast('Nothing pending','err');return;}
+  if(!confirm('Mark all '+pending.length+' pending order(s) as paid/settled?'))return;
+  showLoading('Settling...');
+  try {
+    const paidAt=new Date().toISOString();
+    await Promise.all(pending.map(s=>updateDoc(doc(db,'sales',s.id),{paid:true,paidBy:ME.name,paidAt})));
+    pending.forEach(s=>{s.paid=true;s.paidBy=ME.name;s.paidAt=paidAt;});
+    renderReports();
+    writeLog('separate_orders_settled', { count:pending.length, total:pending.reduce((a,s)=>a+s.total,0) });
+    toast('Settled '+pending.length+' order(s)','ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+};
+function renderReports() {
+  const allSales=getFilteredSales();
+  const sepSales=allSales.filter(isSeparateSale);
+  const sales=allSales.filter(s=>!isSeparateSale(s));
+  const rev=sales.reduce((s,sl)=>s+sl.total,0);
+  const cost=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+(i.cost||0)*i.qty,0),0);
+  const profit=rev-cost;
+  const items=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+i.qty,0),0);
+  // Payment method breakdown (methods marked "separate" are excluded here — shown below instead)
+  const pmBreakdown={};
+  sales.forEach(s=>{const k=s.paymentMethod||'Unspecified';if(!pmBreakdown[k])pmBreakdown[k]={total:0,count:0,icon:s.paymentIcon||'💳'};pmBreakdown[k].total+=s.total;pmBreakdown[k].count++;});
+  const pmCards=Object.entries(pmBreakdown).map(([k,v])=>`<div class="stat-card"><div class="slbl">${v.icon} ${k}</div><div class="sval" style="font-size:15px">${fmt(v.total)}</div><div class="ssub">${v.count} sale${v.count!==1?'s':''}</div></div>`).join('');
+  // One card per separate-flagged payment method, right next to Revenue — shows what's still OWED (pending), not yet settled
+  const sepBreakdown={};
+  sepSales.forEach(s=>{const k=s.paymentMethod||'Unspecified';if(!sepBreakdown[k])sepBreakdown[k]={total:0,count:0,pendingTotal:0,pendingCount:0,icon:s.paymentIcon||'🚚'};sepBreakdown[k].total+=s.total;sepBreakdown[k].count++;if(!s.paid){sepBreakdown[k].pendingTotal+=s.total;sepBreakdown[k].pendingCount++;}});
+  const sepCards=Object.entries(sepBreakdown).map(([k,v])=>`<div class="stat-card" style="border-color:var(--or);background:var(--or-l)"><div class="slbl">${v.icon} ${k} <small style="font-weight:400;text-transform:none">(owed)</small></div><div class="sval" style="color:var(--or)">${fmt(v.pendingTotal)}</div><div class="ssub" style="color:var(--or)">${v.pendingCount} pending of ${v.count}</div></div>`).join('');
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="slbl">Revenue</div><div class="sval">${fmt(rev)}</div><div class="ssub">${sales.length} transactions</div></div>
+    ${sepCards}
+    <div class="stat-card"><div class="slbl">Cost</div><div class="sval">${fmt(cost)}</div></div>
+    <div class="stat-card"><div class="slbl">Profit</div><div class="sval" style="color:var(--gr)">${fmt(profit)}</div><div class="ssub">${rev>0?(profit/rev*100).toFixed(1)+'% margin':'—'}</div></div>
+    <div class="stat-card"><div class="slbl">Items Sold</div><div class="sval">${items}</div></div>
+    ${pmCards}`;
+  const sepWrap=document.getElementById('rep-separate-section');
+  if(!sepSales.length){sepWrap.innerHTML='';}
+  else{
+    const pendingCount=sepSales.filter(s=>!s.paid).length;
+    const pendingTotal=sepSales.filter(s=>!s.paid).reduce((a,s)=>a+s.total,0);
+    sepWrap.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">🚚 Separate Orders</div>
+        ${pendingCount?`<span style="font-size:12px;color:var(--amber);font-weight:600">${pendingCount} pending — ${fmt(pendingTotal)} owed</span><button class="btn-p" style="padding:5px 11px;font-size:12px;margin-left:auto" onclick="window.markAllSeparatePaid()">💰 Settle All Pending</button>`:'<span style="font-size:12px;color:var(--gr);font-weight:600">✓ All settled</span>'}
+      </div>
+      <div class="rep-tbl">${_separateTableHTML(sepSales)}</div>`;
+  }
+  if(!sales.length){document.getElementById('rep-tbl').innerHTML='<div style="padding:28px;text-align:center;color:var(--tx3)">No sales in this period.</div>';return;}
+  document.getElementById('rep-tbl').innerHTML=_salesTableHTML(sales);
+}
 
 // ══════════════════════════════════════════
 // EXCEL EXPORT
 // ══════════════════════════════════════════
 window.exportExcel = function() {
-  const sales=getFilteredSales();
-  if(!sales.length){toast('No sales to export','err');return;}
+  const allSales=getFilteredSales();
+  if(!allSales.length){toast('No sales to export','err');return;}
+  const sepSales=allSales.filter(isSeparateSale);
+  const sales=allSales.filter(s=>!isSeparateSale(s));
   const wb=XLSX.utils.book_new();
   const now=new Date();
   const pl={today:'Today',week:'This Week',month:'This Month',all:'All Time',custom:'Custom Range'}[repPeriod]||repPeriod;
@@ -1441,11 +1567,19 @@ window.exportExcel = function() {
   const cost=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+(i.cost||0)*i.qty,0),0);
   const disc=sales.reduce((s,sl)=>s+sl.discount,0);
   const items=sales.reduce((s,sl)=>s+sl.items.reduce((a,i)=>a+i.qty,0),0);
-  const ws1=XLSX.utils.aoa_to_sheet([['Shathriat — Sales Report'],[''],['Period',pl],['Generated',fmtDT(now.toISOString())],[''],['FINANCIALS',''],['Total Transactions',sales.length],['Total Items Sold',items],['Gross Revenue (IQD)',rev],['Total Discounts (IQD)',disc],['Net Revenue (IQD)',rev-disc],['Total Cost (IQD)',cost],['Gross Profit (IQD)',rev-cost],['Profit Margin (%)',rev>0?+((rev-cost)/rev*100).toFixed(2):0]]);
+  const sepTotal=sepSales.reduce((s,sl)=>s+sl.total,0);
+  const sepPending=sepSales.filter(s=>!s.paid);
+  const sepPendingTotal=sepPending.reduce((s,sl)=>s+sl.total,0);
+  const ws1=XLSX.utils.aoa_to_sheet([['Shathriat — Sales Report'],[''],['Period',pl],['Generated',fmtDT(now.toISOString())],[''],['FINANCIALS (excludes separate-tracked payment methods — see below)',''],['Total Transactions',sales.length],['Total Items Sold',items],['Gross Revenue (IQD)',rev],['Total Discounts (IQD)',disc],['Net Revenue (IQD)',rev-disc],['Total Cost (IQD)',cost],['Gross Profit (IQD)',rev-cost],['Profit Margin (%)',rev>0?+((rev-cost)/rev*100).toFixed(2):0],[''],['SEPARATE (kept out of the daily report)',''],['Separate Orders',sepSales.length],['Separate Total (IQD)',sepTotal],['Pending (not yet settled)',sepPending.length],['Pending Total (IQD)',sepPendingTotal]]);
   ws1['!cols']=[{wch:28},{wch:28}];XLSX.utils.book_append_sheet(wb,ws1,'📊 Summary');
   const ws2r=[['Sale #','Date','Time','Cashier','Shift','Customer','Items Qty','Items Detail','Subtotal (IQD)','Discount (IQD)','Total (IQD)']];
   [...sales].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>ws2r.push(['#'+s.id.slice(-6),fmtD(s.date),fmtT(s.date),s.cashier,s.shiftId?'Yes':'—',s.customerName||'Walk-in',s.items.reduce((a,i)=>a+i.qty,0),s.items.map(i=>i.name+' ×'+i.qty).join(', '),Math.round(s.subtotal),Math.round(s.discount),Math.round(s.total)]));
   const ws2=XLSX.utils.aoa_to_sheet(ws2r);ws2['!cols']=[{wch:8},{wch:14},{wch:10},{wch:16},{wch:8},{wch:18},{wch:10},{wch:50},{wch:16},{wch:16},{wch:16}];XLSX.utils.book_append_sheet(wb,ws2,'🧾 All Sales');
+  if(sepSales.length){
+    const ws5r=[['Sale #','Date','Time','Cashier','Payment','Customer','Items Qty','Items Detail','Subtotal (IQD)','Discount (IQD)','Total (IQD)','Status']];
+    [...sepSales].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>ws5r.push(['#'+s.id.slice(-6),fmtD(s.date),fmtT(s.date),s.cashier,s.paymentMethod||'—',s.customerName||'Walk-in',s.items.reduce((a,i)=>a+i.qty,0),s.items.map(i=>i.name+' ×'+i.qty).join(', '),Math.round(s.subtotal),Math.round(s.discount),Math.round(s.total),s.paid?'Paid':'Pending']));
+    const ws5=XLSX.utils.aoa_to_sheet(ws5r);ws5['!cols']=[{wch:8},{wch:14},{wch:10},{wch:16},{wch:14},{wch:18},{wch:10},{wch:50},{wch:16},{wch:16},{wch:16},{wch:10}];XLSX.utils.book_append_sheet(wb,ws5,'🚚 Separate');
+  }
   const ws3r=[['Sale #','Date','Time','Cashier','Customer','Product','Barcode','Unit Price (IQD)','Qty','Line Total (IQD)','Unit Cost (IQD)','Line Profit (IQD)']];
   [...sales].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>s.items.forEach(i=>{const lp=(i.price-(i.cost||0))*i.qty;ws3r.push(['#'+s.id.slice(-6),fmtD(s.date),fmtT(s.date),s.cashier,s.customerName||'Walk-in',i.name,i.bar,Math.round(i.price),i.qty,Math.round(i.line),Math.round(i.cost||0),Math.round(lp)]);}));
   const ws3=XLSX.utils.aoa_to_sheet(ws3r);ws3['!cols']=[{wch:8},{wch:14},{wch:10},{wch:16},{wch:18},{wch:26},{wch:14},{wch:16},{wch:6},{wch:16},{wch:16},{wch:16}];XLSX.utils.book_append_sheet(wb,ws3,'📦 Item Detail');
@@ -1756,6 +1890,88 @@ window.saveCost=async function(id){
   const p=getProd(id);if(!p)return;
   try{await updateDoc(doc(db,'products',id),{cost:val});p.cost=val;toast('Cost saved','ok');renderCosts();}
   catch(e){toast('Error: '+e.message,'err');}
+};
+
+// ══════════════════════════════════════════
+// EXPENSES
+// ══════════════════════════════════════════
+function renderExpenses(){
+  const wrap=document.getElementById('expenses-wrap');
+  if(!DB.expenses.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--tx3)">No expenses recorded yet.</div>';return;}
+  const total=DB.expenses.reduce((s,e)=>s+(e.price||0),0);
+  wrap.innerHTML=`<div style="margin-bottom:10px;font-size:13px;color:var(--tx2)">Total: <strong style="color:var(--gr);font-family:'DM Mono',monospace">${fmt(total)}</strong> across ${DB.expenses.length} expense${DB.expenses.length!==1?'s':''}</div>
+  <table>
+    <thead><tr><th>Date</th><th>Name</th><th>Price</th><th>Notes</th><th>Actions</th></tr></thead>
+    <tbody>${DB.expenses.map(e=>`<tr>
+      <td style="font-size:12px;color:var(--tx3);white-space:nowrap">${fmtD(e.date)}</td>
+      <td style="font-weight:600">${e.name}</td>
+      <td style="font-weight:700;color:var(--gr);font-family:'DM Mono',monospace">${fmt(e.price)}</td>
+      <td style="font-size:12px;color:var(--tx2)">${e.notes||'—'}</td>
+      <td><div class="td-acts">
+        <button class="btn-s" style="padding:4px 8px;font-size:11px" onclick="window.openEditExpense('${e.id}')">Edit</button>
+        <button class="btn-d" onclick="window.deleteExpense('${e.id}')">Del</button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+window.openAddExpense=function(){
+  ['ne-name','ne-price','ne-notes'].forEach(id=>document.getElementById(id).value='');
+  openM('m-addexpense');
+};
+window.addExpense=async function(){
+  const name=document.getElementById('ne-name').value.trim();
+  const price=parseFloat(document.getElementById('ne-price').value)||0;
+  const notes=document.getElementById('ne-notes').value.trim();
+  if(!name){toast('Name is required','err');return;}
+  showLoading('Saving...');
+  try{
+    const data={name,price,notes,date:serverTimestamp()};
+    const ref=await addDoc(COL.expenses(),data);
+    DB.expenses.unshift({id:ref.id,name,price,notes,date:new Date().toISOString()});
+    closeM('m-addexpense');renderExpenses();
+    writeLog('expense_added',{id:ref.id,name,price});
+    toast('Expense added','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  hideLoading();
+};
+window.openEditExpense=function(id){
+  const e=DB.expenses.find(x=>x.id===id);if(!e)return;
+  document.getElementById('ee-name').value=e.name;
+  document.getElementById('ee-price').value=e.price;
+  document.getElementById('ee-notes').value=e.notes||'';
+  document.getElementById('ee-id').value=id;
+  openM('m-editexpense');
+};
+window.saveExpense=async function(){
+  const id=document.getElementById('ee-id').value;
+  const e=DB.expenses.find(x=>x.id===id);if(!e)return;
+  const updates={
+    name:document.getElementById('ee-name').value.trim()||e.name,
+    price:parseFloat(document.getElementById('ee-price').value)||0,
+    notes:document.getElementById('ee-notes').value.trim(),
+  };
+  showLoading('Saving...');
+  try{
+    await updateDoc(doc(db,'expenses',id),updates);
+    Object.assign(e,updates);
+    closeM('m-editexpense');renderExpenses();
+    writeLog('expense_updated',{id,updates});
+    toast('Expense updated','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  hideLoading();
+};
+window.deleteExpense=async function(id){
+  if(!confirm('Delete this expense?'))return;
+  showLoading('Deleting...');
+  try{
+    const de=DB.expenses.find(x=>x.id===id);
+    await deleteDoc(doc(db,'expenses',id));
+    DB.expenses=DB.expenses.filter(x=>x.id!==id);
+    renderExpenses();
+    writeLog('expense_deleted',{id,name:de?.name});
+    toast('Expense deleted','err');
+  }catch(e){toast('Error: '+e.message,'err');}
+  hideLoading();
 };
 
 // ══════════════════════════════════════════
@@ -2129,6 +2345,13 @@ function wireAllButtons() {
   wireBtn('btn-cancel-editcat', () => closeM('m-editcat'));
   wireBtn('btn-do-saveCat',     () => window.saveCat());
 
+  // Expenses
+  wireBtn('btn-addexpense',        () => window.openAddExpense());
+  wireBtn('btn-cancel-addexpense', () => closeM('m-addexpense'));
+  wireBtn('btn-do-addexpense',     () => window.addExpense());
+  wireBtn('btn-cancel-editexpense',() => closeM('m-editexpense'));
+  wireBtn('btn-do-saveexpense',    () => window.saveExpense());
+
   // Product modals
   wireBtn('btn-cancel-addprod',  () => closeM('m-addprod'));
   wireBtn('btn-do-addprod',      () => window.addProd());
@@ -2212,10 +2435,29 @@ wireAllButtons();
 // EDIT SALE — Admin only
 // ══════════════════════════════════════════
 let editingSale = null; // the sale object being edited (deep copy)
+let editingSaleOriginalItems = null; // items as currently reflected in stock (pre-edit), keyed for diffing
+
+// Reconciles product stock against a change in a sale's items (by barcode).
+// originalItems is what was already deducted from stock; newItems is what should be deducted after saving/deleting.
+async function _applyStockDiff(originalItems, newItems) {
+  const origMap={}; originalItems.forEach(i=>{origMap[i.bar]=(origMap[i.bar]||0)+i.qty;});
+  const newMap={}; newItems.forEach(i=>{newMap[i.bar]=(newMap[i.bar]||0)+i.qty;});
+  const bars=new Set([...Object.keys(origMap),...Object.keys(newMap)]);
+  const changes=[];
+  bars.forEach(bar=>{
+    const diff=(origMap[bar]||0)-(newMap[bar]||0); // positive => fewer sold now => return diff to stock
+    if(!diff) return;
+    const p=DB.products.find(pr=>pr.bar===bar);
+    if(p) changes.push({p,diff});
+  });
+  await Promise.all(changes.map(({p,diff})=>updateDoc(doc(db,'products',p.id),{stock:Math.max(0,(p.stock||0)+diff)})));
+  changes.forEach(({p,diff})=>{ p.stock=Math.max(0,(p.stock||0)+diff); });
+}
 
 function openEditSale(s) {
   // Deep copy so we don't mutate the original until Save
   editingSale = JSON.parse(JSON.stringify(s));
+  editingSaleOriginalItems = JSON.parse(JSON.stringify(s.items));
   document.getElementById('edit-sale-id').textContent = '— Sale #' + s.id.slice(-6);
   document.getElementById('edit-sale-discount').value  = Math.round(s.discount);
   document.getElementById('edit-sale-discount').addEventListener('input', updateEditSaleTotal);
@@ -2297,11 +2539,15 @@ async function saveEditSale() {
       editedAt: new Date().toISOString(),
     };
     await updateDoc(doc(db, 'sales', editingSale.id), updated);
+    // Return/deduct stock for whatever changed between the original and edited items
+    await _applyStockDiff(editingSaleOriginalItems, editingSale.items);
     // Update local DB
     const local = DB.sales.find(s => s.id === editingSale.id);
     if (local) Object.assign(local, updated);
     closeM('m-edit-sale');
     renderReports();
+    renderGrid();
+    if (document.getElementById('v-stock').classList.contains('active')) renderStock();
     toast('✅ Sale updated successfully', 'ok');
   } catch(e) { toast('Error: '+e.message, 'err'); }
   hideLoading();
@@ -2313,6 +2559,8 @@ async function deleteEditSale() {
   showLoading('Deleting sale...');
   try {
     await deleteDoc(doc(db, 'sales', editingSale.id));
+    // Return the sale's items to stock — nothing sold now, so all of it goes back
+    await _applyStockDiff(editingSaleOriginalItems, []);
     // Remove from local DB
     DB.sales = DB.sales.filter(s => s.id !== editingSale.id);
     // Remove from shift saleIds if linked
@@ -2326,7 +2574,9 @@ async function deleteEditSale() {
     closeM('m-edit-sale');
     renderReports();
     renderShifts();
-    toast('Sale deleted', 'err');
+    renderGrid();
+    if (document.getElementById('v-stock').classList.contains('active')) renderStock();
+    toast('Sale deleted — stock restored', 'err');
   } catch(e) { toast('Error: '+e.message, 'err'); }
   hideLoading();
 }
