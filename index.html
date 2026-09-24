@@ -584,6 +584,10 @@ tbody tr:hover{background:var(--sur2);}
       <input type="file" id="lbl-logo-file" accept="image/*" style="display:none">
       <button class="btn-s" id="lbl-logo-reset" style="padding:5px 9px;font-size:11px">Reset logo</button>
     </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px;margin-bottom:10px;background:var(--sur2);border-radius:var(--rs);">
+      <div id="lbl-preview"></div>
+      <div style="font-size:11px;color:var(--tx3)">Live preview — actual print size</div>
+    </div>
     <div id="lbl-list" style="max-height:360px;overflow-y:auto;border:1px solid var(--bdr);border-radius:var(--rs)"></div>
     <div class="modal-foot"><button class="btn-s" id="btn-cancel-labels">Close</button><button class="btn-p" id="btn-do-printlabels">🖨 Print Labels</button></div>
   </div>
@@ -642,6 +646,10 @@ tbody tr:hover{background:var(--sur2);}
   <div class="modal" style="max-width:560px">
     <h3>✏️ Edit Sale <span id="edit-sale-id" style="color:var(--tx3);font-size:13px;font-weight:400"></span></h3>
     <div class="modal-sub">Admin only — edit items, quantities, prices or delete this sale</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <select id="edit-sale-add-select" class="fi" style="flex:1;padding:7px 8px;font-size:12px;"></select>
+      <button class="btn-s" id="edit-sale-add-btn" style="white-space:nowrap;padding:7px 12px;">+ Add Item</button>
+    </div>
     <div id="edit-sale-items" style="margin-bottom:12px;max-height:300px;overflow-y:auto;"></div>
     <div style="background:var(--sur2);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <label style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Discount (IQD)</label>
@@ -1789,6 +1797,8 @@ function getLabelLogoHTML(){
   return custom?`<img src="${custom}" alt="">`:LBL_LOGO_SVG;
 }
 function labelHTMLString(p){
+  const nameLen=(p.name||'').length;
+  const nameFontSize = nameLen>28?6:nameLen>22?7:nameLen>16?8:nameLen>10?9:10;
   return `<div class="label">
     <div class="label-top">
       <div class="label-brand" dir="rtl">عطر الكتب</div>
@@ -1797,7 +1807,7 @@ function labelHTMLString(p){
     </div>
     <div class="label-mid">
       <div class="label-price">${fmt(p.price)}</div>
-      <div class="label-name">${escapeHtml(p.name)}</div>
+      <div class="label-name" style="font-size:${nameFontSize}px">${escapeHtml(p.name)}</div>
     </div>
     <svg class="label-bc" jsbarcode-value="${escapeHtml(p.bar)}" jsbarcode-format="CODE128" jsbarcode-displayvalue="true" jsbarcode-fontsize="10" jsbarcode-height="24" jsbarcode-margin="0" jsbarcode-textmargin="2"></svg>
   </div>`;
@@ -1832,6 +1842,20 @@ window.openLabels=function(onlyId){
   document.getElementById('lbl-width').value=sz.w;
   document.getElementById('lbl-height').value=sz.h;
   openM('m-labels');
+  window.updateLabelPreview();
+};
+window.updateLabelPreview=function(){
+  const wrap=document.getElementById('lbl-preview');
+  if(!wrap) return;
+  const checkedChk=document.querySelector('#lbl-list .lbl-chk:checked');
+  const p=(checkedChk&&getProd(checkedChk.dataset.id))||DB.products[0];
+  if(!p){wrap.innerHTML='<div style="color:var(--tx3);font-size:12px">No products to preview</div>';return;}
+  const w=Math.max(10,parseFloat(document.getElementById('lbl-width').value)||62);
+  const h=Math.max(10,parseFloat(document.getElementById('lbl-height').value)||37);
+  wrap.style.setProperty('--lbl-w',w+'mm');
+  wrap.style.setProperty('--lbl-h',h+'mm');
+  wrap.innerHTML=labelHTMLString(p);
+  JsBarcode('#lbl-preview .label-bc').init();
 };
 window.lblToggleAll=function(v){
   document.querySelectorAll('.lbl-chk').forEach(c=>{c.checked=v;});
@@ -2329,15 +2353,18 @@ function wireAllButtons() {
   // Label printing modal
   wireBtn('btn-cancel-labels',   () => closeM('m-labels'));
   wireBtn('btn-do-printlabels',  () => window.printLabels());
-  document.getElementById('lbl-selall')?.addEventListener('change', e => window.lblToggleAll(e.target.checked));
-  wireBtn('lbl-logo-reset', () => { localStorage.removeItem('shathriat_label_logo'); toast('Logo reset to default','ok'); });
+  document.getElementById('lbl-selall')?.addEventListener('change', e => { window.lblToggleAll(e.target.checked); window.updateLabelPreview(); });
+  wireBtn('lbl-logo-reset', () => { localStorage.removeItem('shathriat_label_logo'); toast('Logo reset to default','ok'); window.updateLabelPreview(); });
   document.getElementById('lbl-logo-file')?.addEventListener('change', function(){
     const f=this.files[0]; if(!f) return;
     const r=new FileReader();
-    r.onload=e=>{ localStorage.setItem('shathriat_label_logo', e.target.result); toast('Custom logo saved','ok'); };
+    r.onload=e=>{ localStorage.setItem('shathriat_label_logo', e.target.result); toast('Custom logo saved','ok'); window.updateLabelPreview(); };
     r.readAsDataURL(f);
     this.value='';
   });
+  document.getElementById('lbl-width')?.addEventListener('input', () => window.updateLabelPreview());
+  document.getElementById('lbl-height')?.addEventListener('input', () => window.updateLabelPreview());
+  document.getElementById('lbl-list')?.addEventListener('change', e => { if (e.target.classList.contains('lbl-chk')) window.updateLabelPreview(); });
 
   // Category modals
   wireBtn('btn-cancel-addcat',  () => closeM('m-addcat'));
@@ -2383,6 +2410,7 @@ function wireAllButtons() {
   wireBtn('edit-sale-cancel-btn', () => closeM('m-edit-sale'));
   wireBtn('edit-sale-save-btn',   () => saveEditSale());
   wireBtn('edit-sale-delete-btn', () => deleteEditSale());
+  wireBtn('edit-sale-add-btn',    () => window.editSaleAddItem());
 
   // Nav tabs
   document.querySelectorAll('.ntab').forEach(tab => {
@@ -2461,10 +2489,29 @@ function openEditSale(s) {
   document.getElementById('edit-sale-id').textContent = '— Sale #' + s.id.slice(-6);
   document.getElementById('edit-sale-discount').value  = Math.round(s.discount);
   document.getElementById('edit-sale-discount').addEventListener('input', updateEditSaleTotal);
+  const sel = document.getElementById('edit-sale-add-select');
+  sel.innerHTML = [...DB.products].sort((a,b)=>a.name.localeCompare(b.name))
+    .map(p=>`<option value="${p.id}">${p.name} — ${p.bar}</option>`).join('');
   renderEditSaleItems();
   updateEditSaleTotal();
   openM('m-edit-sale');
 }
+
+window.editSaleAddItem = function() {
+  const sel = document.getElementById('edit-sale-add-select');
+  const pid = sel.value;
+  const p = getProd(pid);
+  if (!p) { toast('Pick a product to add','err'); return; }
+  const existing = editingSale.items.find(i => i.bar === p.bar);
+  if (existing) {
+    existing.qty += 1;
+    existing.line = existing.price * existing.qty;
+  } else {
+    editingSale.items.push({ name:p.name, bar:p.bar, price:p.price, cost:p.cost||0, qty:1, line:p.price, gift:false });
+  }
+  renderEditSaleItems();
+  updateEditSaleTotal();
+};
 
 function renderEditSaleItems() {
   const wrap = document.getElementById('edit-sale-items');
