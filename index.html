@@ -172,6 +172,9 @@ button{font-family:inherit;cursor:pointer;}
 .view-srch input{width:100%;padding:9px 13px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:inherit;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
 .view-srch input:focus{border-color:var(--gr);box-shadow:0 0 0 3px var(--gr-l);}
 .pos-mtabs{display:none;}
+/* EXHIBITION */
+.exh-pos{flex:1;display:flex;min-height:0;}
+.exh-pill{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--or-l);color:var(--or);vertical-align:middle;}
 table{width:100%;border-collapse:collapse;background:var(--sur);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);}
 thead th{padding:9px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;background:var(--sur2);border-bottom:1px solid var(--bdr);}
 tbody td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--bdr);}
@@ -290,6 +293,19 @@ tbody tr:hover{background:var(--sur2);}
 .cust-no-result{padding:10px 12px;font-size:13px;color:var(--tx3);text-align:center;}
 .cpv-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:12px;}
 .cpv-row:last-child{border-bottom:none;}
+/* LOGS */
+.log-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 12px 0;flex-shrink:0;}
+.log-filters input,.log-filters select{padding:8px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:inherit;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+.log-filters input:focus,.log-filters select:focus{border-color:var(--gr);}
+.log-filters #log-srch{flex:1;min-width:200px;}
+.log-filters label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2);}
+.log-act{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;background:var(--sur2);color:var(--tx2);}
+.log-act.add{background:var(--gr-l);color:var(--gr);}
+.log-act.del{background:var(--re-l);color:var(--re);}
+.log-act.upd{background:var(--or-l);color:var(--or);}
+.log-act.auth{background:#EBF0FF;color:#3557D9;}
+.log-det{font-size:12px;color:var(--tx2);line-height:1.5;word-break:break-word;}
+.log-det b{color:var(--tx);font-weight:600;}
 /* USERS */
 #v-users{flex-direction:column;overflow:hidden;}
 .users-wrap{flex:1;overflow-y:auto;padding:12px;}
@@ -359,6 +375,10 @@ tbody tr:hover{background:var(--sur2);}
   .pos-mtabs{display:flex;flex-shrink:0;background:var(--sur);border-top:1px solid var(--bdr);padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:6px;}
   .pos-mtabs button{flex:1;padding:11px;border-radius:var(--rs);border:1.5px solid var(--bdr);background:var(--sur);font-size:14px;font-weight:600;color:var(--tx2);display:flex;align-items:center;justify-content:center;gap:6px;}
   .pos-mtabs button.active{background:var(--gr);border-color:var(--gr);color:#fff;}
+  .exh-pos{flex-direction:column;}
+  .exh-pos .cart-panel{display:none;width:100%;border-right:none;flex:1;min-height:0;}
+  .exh-pos.show-cart .cart-panel{display:flex;}
+  .exh-pos.show-cart .prod-panel{display:none;}
   .pmt-cnt{background:var(--or);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;}
   .prod-toolbar{padding:8px;}
   .srch-inp{width:100%;}
@@ -400,6 +420,11 @@ tbody tr:hover{background:var(--sur2);}
   .ss-disc,.ss-total{width:auto;}
   /* Customers / users */
   .cust-grid,.users-grid{grid-template-columns:1fr;}
+  .log-filters{padding:10px 10px 0;}
+  .log-filters #log-srch{flex-basis:100%;}
+  .log-filters select,.log-filters label{flex:1 1 calc(50% - 4px);min-width:0;}
+  .log-filters label input{flex:1;min-width:0;}
+  .log-filters .btn-s{flex-basis:100%;}
   .cust-acts .btn-s,.cust-acts .btn-d,.user-acts .btn-s,.user-acts .btn-d{padding:7px 10px;}
   /* Modals */
   .modal{width:calc(100% - 20px);padding:18px 16px;max-height:88vh;max-height:88dvh;border-radius:14px;}
@@ -464,9 +489,11 @@ tbody tr:hover{background:var(--sur2);}
         <button class="ntab" onclick="goView('expenses',this)" data-role="cashier,subadmin,admin">💸 Expenses</button>
         <button class="ntab" onclick="goView('reports',this)" data-role="admin">📊 Reports</button>
         <button class="ntab" onclick="goView('shifts',this)" data-role="admin">⏱ Shifts</button>
+        <button class="ntab" onclick="goView('exhibition',this)" data-role="admin">🎪 Exhibition</button>
         <button class="ntab" onclick="goView('stock',this)">🔔 Alerts</button>
         <button class="ntab" onclick="goView('customers',this)">👥 Customers</button>
         <button class="ntab" onclick="goView('users',this)" data-role="admin">👤 Users</button>
+        <button class="ntab" onclick="goView('logs',this)" data-role="admin">📜 Logs</button>
         <button class="ntab" onclick="goView('settings',this)" data-role="admin">⚙️ Settings</button>
       </div>
     </div>
@@ -551,6 +578,7 @@ tbody tr:hover{background:var(--sur2);}
             <button class="rtab" data-period="all">All Time</button>
             <button class="rtab" data-period="custom">📅 Custom</button>
           </div>
+          <select id="rep-source" class="fi" style="width:auto;margin-left:auto;padding:6px 10px" onchange="renderReports()"><option value="">All sales</option></select>
         </div>
         <div class="rep-date-row" id="rep-date-row">
           <div style="display:flex;align-items:center;gap:7px;font-size:13px;"><label style="font-weight:600;color:var(--tx2)">From</label><input type="date" id="rep-from" class="fi" style="width:155px;padding:6px 10px" onchange="renderReports()"></div>
@@ -566,6 +594,53 @@ tbody tr:hover{background:var(--sur2);}
     <div class="view" id="v-shifts">
       <div class="view-hdr"><h2>⏱ Shifts</h2><button class="btn-p" id="btn-start-shift">▶ Start New Shift</button></div>
       <div class="shifts-wrap" id="shifts-wrap"></div>
+    </div>
+    <!-- EXHIBITION — admin only: a second POS that sells from stock moved out of the shop -->
+    <div class="view" id="v-exhibition" style="flex-direction:column;overflow:hidden;">
+      <div class="view-hdr">
+        <div><h2 id="exh-title">🎪 Exhibition</h2><div id="exh-stats" style="font-size:12px;color:var(--tx3);margin-top:2px"></div></div>
+        <div style="display:flex;gap:6px" id="exh-actions"><button class="btn-excel" id="btn-exh-export">📊 Export</button><button class="btn-s" id="btn-exh-items">✏️ Edit Items</button><button class="btn-d" style="padding:7px 14px;font-size:13px" id="btn-exh-close">⏹ Close Exhibition</button></div>
+      </div>
+      <div id="exh-none" class="hidden" style="flex:1;overflow-y:auto;padding:16px;">
+        <div class="cost-sec" style="max-width:520px;">
+          <div class="cost-sec-hdr">▶ Start a new exhibition</div>
+          <div style="padding:14px">
+            <div class="fl"><label>Exhibition name</label><input class="fi" id="exh-new-name" placeholder="e.g. Baghdad Book Fair"></div>
+            <button class="btn-p" id="btn-exh-start">▶ Start Exhibition</button>
+            <div style="font-size:12px;color:var(--tx3);margin-top:10px">After starting, use <b>✏️ Edit Items</b> to move stock from the shop to the exhibition.</div>
+          </div>
+        </div>
+        <div id="exh-history"></div>
+      </div>
+      <div id="exh-pos" class="exh-pos hidden">
+        <div class="cart-panel">
+          <div class="cart-hdr"><h2>Exhibition Sale</h2><span class="cart-cnt" id="exh-cart-cnt">0 items</span></div>
+          <div class="cart-body" id="exh-cart-body"></div>
+          <div class="cart-foot">
+            <div class="sub-row"><span>Subtotal</span><span id="exh-sub">0 IQD</span></div>
+            <div class="disc-box"><label>Discount</label>
+              <div class="disc-row">
+                <button class="dtype-btn active" id="exh-dbt-pct" onclick="window.exhSetDT('pct')">%</button>
+                <button class="dtype-btn" id="exh-dbt-amt" onclick="window.exhSetDT('amt')">IQD</button>
+                <input class="dinp" id="exh-disc-val" type="number" min="0" step="250" placeholder="0">
+                <button class="dapply" onclick="window.exhApplyDisc()">Apply</button>
+              </div>
+            </div>
+            <div class="total-row"><div><div class="total-lbl">Total</div><div class="total-saved" id="exh-saved-lbl"></div></div><div class="total-amt" id="exh-total">0 IQD</div></div>
+            <div style="margin-bottom:6px"><textarea id="exh-sale-note" placeholder="📝 Note (optional)..." rows="2" style="width:100%;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-family:inherit;font-size:12px;background:var(--sur);color:var(--tx);outline:none;resize:none;line-height:1.4;"></textarea></div>
+            <button class="clear-btn" onclick="window.exhClearCart()">🗑 Clear Sale</button>
+            <button class="co-btn" id="exh-co-btn" disabled onclick="window.exhCheckout()">Checkout →</button>
+          </div>
+        </div>
+        <div class="prod-panel">
+          <div class="prod-toolbar"><input class="srch-inp" id="exh-psrch" placeholder="🔍 Search or scan barcode..." oninput="window.renderExhGrid()" onkeydown="if(event.key==='Enter')window.exhScan(this)"><div class="chips" id="exh-chips"></div></div>
+          <div class="prod-grid" id="exh-grid"></div>
+        </div>
+        <div class="pos-mtabs">
+          <button class="active" id="exh-mt-prods" onclick="window.exhTab('prods')">🛍 Products</button>
+          <button id="exh-mt-cart" onclick="window.exhTab('cart')">🛒 Cart <span class="pmt-cnt" id="exh-mt-cnt">0</span></button>
+        </div>
+      </div>
     </div>
     <!-- ALERTS -->
     <div class="view" id="v-stock">
@@ -584,6 +659,19 @@ tbody tr:hover{background:var(--sur2);}
       <div class="users-wrap"><div class="users-grid" id="users-grid"></div></div>
     </div>
     <!-- SETTINGS -->
+    <!-- LOGS -->
+    <div class="view" id="v-logs" style="flex-direction:column;overflow:hidden;">
+      <div class="view-hdr"><h2>📜 Activity Log</h2><button class="btn-s" onclick="window.loadLogs()">⟳ Refresh</button></div>
+      <div class="log-filters">
+        <input id="log-srch" type="search" placeholder="🔍 Search action, user or details..." oninput="renderLogs()" autocomplete="off">
+        <select id="log-user" onchange="renderLogs()"><option value="">All users</option></select>
+        <select id="log-action" onchange="renderLogs()"><option value="">All actions</option></select>
+        <label>From <input type="date" id="log-from" onchange="window.loadLogs()"></label>
+        <label>To <input type="date" id="log-to" onchange="window.loadLogs()"></label>
+        <button class="btn-s" onclick="window.clearLogFilters()">Clear</button>
+      </div>
+      <div class="prod-tbl-wrap" id="logs-wrap"></div>
+    </div>
     <div class="view" id="v-settings" style="flex-direction:column;overflow:hidden;">
       <div class="view-hdr"><h2>⚙️ Settings</h2></div>
       <div style="flex:1;overflow-y:auto;padding:16px;">
@@ -778,6 +866,19 @@ tbody tr:hover{background:var(--sur2);}
   </div>
 </div>
 <!-- Payment Method Checkout Modal -->
+<div class="modal-bg" id="m-exh-items">
+  <div class="modal" style="max-width:760px">
+    <h3>✏️ Exhibition Items</h3>
+    <div class="modal-sub">Send items from the shop to the exhibition, or return unsold items back to the shop</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <input class="fi" id="exh-items-srch" type="search" placeholder="🔍 Search by name, barcode or category..." oninput="window.renderExhItems()" autocomplete="off" style="flex:1;min-width:180px">
+      <select class="fi" id="exh-items-cat" onchange="window.renderExhItems()" style="width:auto"></select>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2)"><input type="checkbox" id="exh-items-only" onchange="window.renderExhItems()"> Only at exhibition</label>
+    </div>
+    <div id="exh-items-wrap" style="max-height:55vh;overflow:auto"></div>
+    <div class="modal-foot"><button class="btn-s" onclick="closeM('m-exh-items')">Done</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="m-payment">
   <div class="modal" style="max-width:400px">
     <h3>💳 Payment Method</h3>
@@ -799,8 +900,8 @@ import { getAuth, signInWithEmailAndPassword,
 import { getFirestore, collection, doc,
          getDocs, getDoc, addDoc, setDoc,
          updateDoc, deleteDoc, onSnapshot,
-         query, orderBy, serverTimestamp,
-         Timestamp }                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+         query, orderBy, serverTimestamp, where, limit,
+         Timestamp, writeBatch, increment }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ══════════════════════════════════════════
 // FIREBASE CONFIG
@@ -830,6 +931,7 @@ const COL = {
   paymentMethods: () => collection(db, 'paymentMethods'),
   expenses:       () => collection(db, 'expenses'),
   logs:           () => collection(db, 'logs'),
+  exhibitions:    () => collection(db, 'exhibitions'),
 };
 
 // ══════════════════════════════════════════
@@ -858,7 +960,7 @@ function writeLog(action, details={}) {
 // ══════════════════════════════════════════
 // LOCAL STATE (populated from Firestore)
 // ══════════════════════════════════════════
-let DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[], expenses:[] };
+let DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[], expenses:[], exhibitions:[] };
 let ME = null;          // logged-in user profile (from Firestore users collection)
 let cart = [];
 let dType = 'pct', dVal = 0;
@@ -941,7 +1043,7 @@ async function doLogout() {
   writeLog('logout');
   unsubs.forEach(u => u()); unsubs = [];
   cart = []; dVal = 0; selectedCustomer = null; activeShift = null; ME = null;
-  DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[], expenses:[] };
+  DB = { products:[], cats:[], sales:[], shifts:[], customers:[], users:[], paymentMethods:[], expenses:[], exhibitions:[] };
   await signOut(auth);
   document.getElementById('login-pg').classList.remove('hidden');
   document.getElementById('app').classList.remove('on');
@@ -1034,6 +1136,7 @@ function setupRealtimeListeners() {
     renderGrid();
     if (document.getElementById('v-stock').classList.contains('active')) renderStock();
     if (document.getElementById('v-products').classList.contains('active')) renderProdTable();
+    refreshExhViews();
   });
   // Sales — live updates for reports
   const u2 = onSnapshot(query(COL.sales(), orderBy('date','desc')), snap => {
@@ -1043,8 +1146,24 @@ function setupRealtimeListeners() {
     }));
     if (document.getElementById('v-reports').classList.contains('active')) renderReports();
     if (document.getElementById('v-shifts').classList.contains('active')) renderShifts();
+    if (document.getElementById('v-exhibition').classList.contains('active')) renderExhibition();
   });
   unsubs.push(u1, u2);
+  // Exhibitions — admin only (stock moved out of the shop + its own POS)
+  if (ME.role==='admin') {
+    const u3 = onSnapshot(COL.exhibitions(), snap => {
+      DB.exhibitions = snap.docs.map(d => {
+        const x = d.data({ serverTimestamps:'estimate' });
+        return { id:d.id, ...x,
+          startedAt: x.startedAt ? tsToDate(x.startedAt).toISOString() : new Date().toISOString(),
+          endedAt:   x.endedAt   ? tsToDate(x.endedAt).toISOString()   : null };
+      }).sort((a,b) => b.startedAt.localeCompare(a.startedAt));
+      refreshExhViews();
+      if (document.getElementById('v-reports').classList.contains('active')) renderReports();
+      if (document.getElementById('v-products').classList.contains('active')) renderProdTable();
+    }, e => console.warn('Exhibitions listener:', e.message));
+    unsubs.push(u3);
+  }
 }
 
 // ══════════════════════════════════════════
@@ -1074,11 +1193,96 @@ function goView(name, btn) {
   if (name==='expenses')  renderExpenses();
   if (name==='reports')   renderReports();
   if (name==='shifts')    renderShifts();
+  if (name==='exhibition') renderExhibition();
   if (name==='stock')     renderStock();
   if (name==='customers') renderCustomers();
   if (name==='users')     renderUsers();
   if (name==='settings')  renderSettings();
+  if (name==='logs')      window.loadLogs();
 }
+
+// ══════════════════════════════════════════
+// ACTIVITY LOG VIEWER — admin only
+// ══════════════════════════════════════════
+const LOG_LIMIT = 1000;
+let LOGS = [];
+window.loadLogs = async function() {
+  const wrap = document.getElementById('logs-wrap');
+  const from = document.getElementById('log-from').value;
+  const to   = document.getElementById('log-to').value;
+  // Date range is applied in Firestore so older logs are reachable; other filters run locally
+  const conds = [];
+  if (from) conds.push(where('ts', '>=', Timestamp.fromDate(new Date(from+'T00:00:00'))));
+  if (to)   conds.push(where('ts', '<=', Timestamp.fromDate(new Date(to+'T23:59:59.999'))));
+  wrap.innerHTML = '<div style="padding:28px;text-align:center;color:var(--tx3)">Loading logs...</div>';
+  try {
+    const snap = await getDocs(query(COL.logs(), ...conds, orderBy('ts','desc'), limit(LOG_LIMIT)));
+    LOGS = snap.docs.map(d => ({ id:d.id, ...d.data(), ts: d.data().ts ? tsToDate(d.data().ts).toISOString() : null }));
+    fillLogFilterOptions();
+    renderLogs();
+  } catch(e) {
+    wrap.innerHTML = `<div style="padding:28px;text-align:center;color:var(--re)">Could not load logs: ${escapeHtml(e.message)}</div>`;
+  }
+};
+function fillLogFilterOptions() {
+  const fill = (id, label, values) => {
+    const sel = document.getElementById(id), cur = sel.value;
+    sel.innerHTML = `<option value="">${label}</option>` + values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(logActionLabel(v, id==='log-action'))}</option>`).join('');
+    if (values.includes(cur)) sel.value = cur;
+  };
+  fill('log-user',   'All users',   [...new Set(LOGS.map(l=>l.user).filter(Boolean))].sort());
+  fill('log-action', 'All actions', [...new Set(LOGS.map(l=>l.action).filter(Boolean))].sort());
+}
+function logActionLabel(a, isAction=true) {
+  if (!isAction) return a;
+  return (a||'').replace(/_/g,' ').replace(/^./, c=>c.toUpperCase());
+}
+function logActionClass(a='') {
+  if (a==='login'||a==='logout') return 'auth';
+  if (/deleted/.test(a)) return 'del';
+  if (/added|created|started/.test(a)) return 'add';
+  if (/updated|renamed|ended|paid|settled/.test(a)) return 'upd';
+  return '';
+}
+function logDetailsHTML(d) {
+  if (!d || typeof d!=='object' || !Object.keys(d).length) return '<span style="color:var(--tx3)">—</span>';
+  const val = v => {
+    if (v==null) return '—';
+    if (typeof v==='object') { const j = JSON.stringify(v); return j.length>160 ? j.slice(0,160)+'…' : j; }
+    return String(v);
+  };
+  return Object.entries(d).map(([k,v])=>`<b>${escapeHtml(k)}:</b> ${escapeHtml(val(v))}`).join(' &nbsp;·&nbsp; ');
+}
+function renderLogs() {
+  const wrap = document.getElementById('logs-wrap');
+  const q    = srchVal('log-srch');
+  const user = document.getElementById('log-user').value;
+  const act  = document.getElementById('log-action').value;
+  const list = LOGS.filter(l =>
+    (!user || l.user===user) &&
+    (!act  || l.action===act) &&
+    (!q || [l.action, l.user, l.role, JSON.stringify(l.details||{})].join(' ').toLowerCase().includes(q))
+  );
+  const capped = LOGS.length>=LOG_LIMIT ? ` (showing the latest ${LOG_LIMIT} — use the date range to see older logs)` : '';
+  if (!list.length) { wrap.innerHTML = `<div style="padding:28px;text-align:center;color:var(--tx3)">No log entries found.${capped}</div>`; return; }
+  wrap.innerHTML = `<div style="margin-bottom:10px;font-size:13px;color:var(--tx2)">${list.length} entr${list.length!==1?'ies':'y'}${capped}</div>
+  <table>
+    <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+    <tbody>${list.map(l=>`<tr>
+      <td style="font-size:12px;color:var(--tx3);white-space:nowrap;font-family:'DM Mono',monospace">${l.ts?fmtDT(l.ts):'—'}</td>
+      <td style="white-space:nowrap"><div style="font-weight:600">${escapeHtml(l.user||'—')}</div>${l.role?`<span class="rbadge ${escapeHtml(l.role)}">${escapeHtml(l.role)}</span>`:''}</td>
+      <td><span class="log-act ${logActionClass(l.action)}">${escapeHtml(logActionLabel(l.action))}</span></td>
+      <td class="log-det">${logDetailsHTML(l.details)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+window.renderLogs = renderLogs;
+window.clearLogFilters = function() {
+  ['log-srch','log-user','log-action'].forEach(id => document.getElementById(id).value='');
+  const hadDates = document.getElementById('log-from').value || document.getElementById('log-to').value;
+  document.getElementById('log-from').value = ''; document.getElementById('log-to').value = '';
+  if (hadDates) window.loadLogs(); else renderLogs();
+};
 
 // ══════════════════════════════════════════
 // SETTINGS — Payment Methods
@@ -1413,15 +1617,18 @@ function doCheckout() {
     grid.innerHTML = `<div style="grid-column:1/-1;padding:16px;text-align:center;color:var(--tx3);font-size:13px;">No payment methods yet.<br>Go to <strong>⚙️ Settings</strong> to add them.</div>`;
     openM('m-payment'); return;
   }
-  const methods = DB.paymentMethods;
-  grid.innerHTML = methods.map(m=>`
-    <button onclick="window.selectPayment('${m.id}','${(m.name||'').replace(/'/g,"\\'")}','${m.icon||'💳'}')"
+  grid.innerHTML = paymentButtonsHTML(m => `window.selectPayment('${m.id}','${(m.name||'').replace(/'/g,"\\'")}','${m.icon||'💳'}')`);
+  openM('m-payment');
+}
+// Payment method buttons for the checkout modal; onclickFor(m) returns the button's onclick code
+function paymentButtonsHTML(onclickFor) {
+  return DB.paymentMethods.map(m=>`
+    <button onclick="${onclickFor(m)}"
       style="padding:18px 8px;border:2px solid var(--bdr);border-radius:var(--r);background:var(--sur);font-size:13px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.15s;"
       onmouseover="this.style.borderColor='var(--gr)';this.style.background='var(--gr-l)'"
       onmouseout="this.style.borderColor='var(--bdr)';this.style.background='var(--sur)'">
       <span style="font-size:28px">${m.icon||'💳'}</span>${m.name}
     </button>`).join('');
-  openM('m-payment');
 }
 window.selectPayment = async function(pmId, pmName, pmIcon) {
   closeM('m-payment');
@@ -1474,6 +1681,7 @@ function showReceipt(s, isNew) {
     <small>Cashier: ${s.cashier}</small><br>
     ${s.customerName?`<small>Customer: ${s.customerName}</small><br>`:''}
     ${sh?`<small>Shift — ${sh.cashier}</small><br>`:''}
+    ${s.exhibitionName?`<small>🎪 ${s.exhibitionName}</small><br>`:''}
     <small style="color:var(--tx3)">Sale #${s.id.slice(-6)}</small></div>
     <hr class="rdiv">${rows}<hr class="rdiv">
     <div class="rrow"><span>Subtotal</span><span>${fmt(s.subtotal)}</span></div>
@@ -1493,7 +1701,7 @@ function showReceipt(s, isNew) {
     closeBtn.textContent='New Sale';
     if (editBtn) editBtn.style.display='none';
     const nb=closeBtn.cloneNode(true); closeBtn.parentNode.replaceChild(nb,closeBtn);
-    nb.addEventListener('click',()=>{ closeM('m-receipt'); clearCart(); });
+    nb.addEventListener('click',()=>{ closeM('m-receipt'); if(!s.exhibitionId) clearCart(); });
   } else {
     document.getElementById('receipt-title').textContent='🧾 Receipt';
     document.getElementById('receipt-sub').textContent=fmtDT(s.date)+' · '+s.cashier;
@@ -1545,7 +1753,19 @@ function getFilteredSales() {
     if(from)sales=sales.filter(s=>new Date(s.date)>=new Date(from));
     if(to)  sales=sales.filter(s=>new Date(s.date)<=new Date(to+'T23:59:59'));
   }
+  // Source filter: shop only, all exhibitions, or one exhibition
+  const src=document.getElementById('rep-source')?.value||'';
+  if(src==='shop')     sales=sales.filter(s=>!s.exhibitionId);
+  else if(src==='exh') sales=sales.filter(s=>s.exhibitionId);
+  else if(src)         sales=sales.filter(s=>s.exhibitionId===src);
   return sales;
+}
+function fillRepSourceOptions() {
+  const sel=document.getElementById('rep-source'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All sales</option><option value="shop">🏪 Shop only</option><option value="exh">🎪 All exhibitions</option>'+
+    DB.exhibitions.map(e=>`<option value="${e.id}">🎪 ${escapeHtml(e.name)}${e.status==='open'?' (running)':''}</option>`).join('');
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:'';
 }
 window.setRP = function(period,btn) {
   repPeriod=period;
@@ -1570,7 +1790,7 @@ function _salesTableHTML(sales) {
         <td style="font-size:12px">${fmtD(s.date)}</td>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)">${fmtT(s.date)}</td>
         <td>${s.cashier}</td>
-        <td style="font-size:12px">${s.paymentMethod?`${s.paymentIcon||'💳'} ${s.paymentMethod}`:'<span style="color:var(--tx3)">—</span>'}</td>
+        <td style="font-size:12px">${s.paymentMethod?`${s.paymentIcon||'💳'} ${s.paymentMethod}`:'<span style="color:var(--tx3)">—</span>'}${s.exhibitionId?` <span class="exh-pill" title="${s.exhibitionName||''}">🎪 Exhibition</span>`:''}</td>
         <td>${s.customerName||'<span style="color:var(--tx3)">Walk-in</span>'}</td>
         <td>${s.items.reduce((a,i)=>a+i.qty,0)}</td>
         <td style="font-family:'DM Mono',monospace;color:var(--or)">${s.discount>0?'-'+fmt(s.discount):'—'}</td>
@@ -1627,6 +1847,7 @@ window.markAllSeparatePaid = async function() {
   hideLoading();
 };
 function renderReports() {
+  fillRepSourceOptions();
   const allSales=getFilteredSales();
   const sepSales=allSales.filter(isSeparateSale);
   const sales=allSales.filter(s=>!isSeparateSale(s));
@@ -1699,7 +1920,9 @@ window.exportExcel = function() {
   const ws4r=[['Shift #','Cashier','Date','Start Time','End Time','Duration','Opening Cash (IQD)','Closing Cash (IQD)','Cash Diff (IQD)','Sales','Revenue (IQD)','Discounts (IQD)','Status','Notes']];
   DB.shifts.forEach(sh=>{const shS=DB.sales.filter(s=>sh.saleIds.includes(s.id));const shr=shS.reduce((a,s)=>a+s.total,0);const shd=shS.reduce((a,s)=>a+s.discount,0);const ms=(sh.endTime?new Date(sh.endTime):new Date())-new Date(sh.startTime);const dur=Math.floor(ms/3600000)+'h '+Math.floor((ms%3600000)/60000)+'m';ws4r.push([sh.id.slice(-6),sh.cashier,fmtD(sh.startTime),fmtT(sh.startTime),sh.endTime?fmtT(sh.endTime):'Still Open',dur,Math.round(sh.openCash),sh.closeCash!=null?Math.round(sh.closeCash):'—',sh.closeCash!=null?Math.round(sh.closeCash-sh.openCash):'—',shS.length,Math.round(shr),Math.round(shd),sh.endTime?'Closed':'Active',[sh.notes,sh.closeNotes].filter(Boolean).join(' | ')]);});
   const ws4=XLSX.utils.aoa_to_sheet(ws4r);ws4['!cols']=[{wch:8},{wch:16},{wch:14},{wch:12},{wch:12},{wch:10},{wch:18},{wch:18},{wch:16},{wch:8},{wch:16},{wch:16},{wch:10},{wch:30}];XLSX.utils.book_append_sheet(wb,ws4,'⏱ Shifts');
-  const fn=`ARCH_POS_${pl.replace(/\s/g,'_')}_${now.toISOString().slice(0,10)}.xlsx`;
+  const srcSel=document.getElementById('rep-source');
+  const srcLbl=srcSel&&srcSel.value?'_'+srcSel.options[srcSel.selectedIndex].text.replace(/[^\w\u0600-\u06FF]+/g,'_').replace(/^_+|_+$/g,''):'';
+  const fn=`ARCH_POS_${pl.replace(/\s/g,'_')}${srcLbl}_${now.toISOString().slice(0,10)}.xlsx`;
   XLSX.writeFile(wb,fn);toast('✅ Exported: '+fn,'ok');
 };
 
@@ -1756,7 +1979,7 @@ function renderProdTable() {
         <td style="font-weight:600">${p.name}</td>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3)">${p.bar}</td>
         <td style="font-weight:700;color:var(--gr);font-family:'DM Mono',monospace">${fmt(p.price)}</td>
-        <td class="${cls}">${p.stock??0} <small style="font-weight:400;color:var(--tx3)">(alert@${p.threshold??0})</small></td>
+        <td class="${cls}">${p.stock??0} <small style="font-weight:400;color:var(--tx3)">(alert@${p.threshold??0})</small>${exhAt(p.id)?` <span class="exh-pill">+${exhAt(p.id)} at exhibition</span>`:''}</td>
         <td><span class="cat-tag">${cat?cat.name:'—'}</span></td>
         <td><div class="td-acts">
           <button class="btn-s" style="padding:4px 8px;font-size:11px" onclick="openLabels('${p.id}')">🏷️</button>
@@ -2428,6 +2651,357 @@ window.deleteUser=async function(id){
 
 
 // ══════════════════════════════════════════
+// EXHIBITION — admin only
+// product.stock is always the SHOP stock. Sending items to the exhibition moves
+// qty from product.stock into exhibition.items[productId]; returning moves it back.
+// Exhibition sales are normal sales (tagged exhibitionId) that draw only from exhibition.items.
+// ══════════════════════════════════════════
+let exhCart = [], exhCatFilter = 'all', exhDType = 'pct', exhDVal = 0;
+const getActiveExh = () => DB.exhibitions.find(e => e.status==='open') || null;
+const exhQty  = (exh, pid) => (exh && exh.items && exh.items[pid]) || 0;
+const exhAt   = pid => exhQty(getActiveExh(), pid);
+const exhSalesOf = exh => DB.sales.filter(s => s.exhibitionId===exh.id);
+const sumQty  = m => Object.values(m||{}).reduce((a,n)=>a+(n||0),0);
+// Products that are (or were) at the exhibition — sold-out ones stay visible
+const exhProducts = exh => exh ? DB.products.filter(p => exhQty(exh,p.id)>0 || (exh.sent||{})[p.id]) : [];
+
+function refreshExhViews() {
+  if (document.getElementById('v-exhibition').classList.contains('active')) renderExhibition();
+  if (document.getElementById('m-exh-items').classList.contains('open')) renderExhItems();
+}
+
+function renderExhibition() {
+  const exh = getActiveExh();
+  document.getElementById('exh-none').classList.toggle('hidden', !!exh);
+  document.getElementById('exh-pos').classList.toggle('hidden', !exh);
+  document.getElementById('exh-actions').classList.toggle('hidden', !exh);
+  document.getElementById('exh-title').textContent = exh ? '🎪 '+exh.name : '🎪 Exhibition';
+  if (!exh) {
+    exhCart = [];
+    document.getElementById('exh-stats').textContent = 'No exhibition running';
+    renderExhHistory(); return;
+  }
+  const sales = exhSalesOf(exh);
+  const rev  = sales.reduce((a,s)=>a+s.total,0);
+  const sold = sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.qty,0),0);
+  document.getElementById('exh-stats').innerHTML =
+    `Since ${fmtDT(exh.startedAt)} · <b>${sumQty(exh.items)}</b> available · <b>${sold}</b> sold in ${sales.length} sale${sales.length!==1?'s':''} · Revenue <b style="color:var(--gr)">${fmt(rev)}</b>`;
+  renderExhChips(); renderExhGrid(); renderExhCart();
+}
+
+function renderExhChips() {
+  const catIds = new Set(exhProducts(getActiveExh()).map(p=>p.cat));
+  if (exhCatFilter!=='all' && !catIds.has(exhCatFilter)) exhCatFilter = 'all';
+  document.getElementById('exh-chips').innerHTML =
+    `<button class="chip ${exhCatFilter==='all'?'active':''}" onclick="window.exhSetCat('all')">All</button>`+
+    DB.cats.filter(c=>catIds.has(c.id)).map(c=>`<button class="chip ${exhCatFilter===c.id?'active':''}" onclick="window.exhSetCat('${c.id}')">${c.name}</button>`).join('');
+}
+window.exhSetCat = function(id) { exhCatFilter=id; renderExhChips(); renderExhGrid(); };
+
+function renderExhGrid() {
+  const exh = getActiveExh(); if (!exh) return;
+  const grid = document.getElementById('exh-grid');
+  const q    = srchVal('exh-psrch');
+  const all  = exhProducts(exh);
+  const list = all.filter(p => (exhCatFilter==='all'||p.cat===exhCatFilter) && prodMatches(p,q)).sort((a,b)=>a.name.localeCompare(b.name));
+  if (!list.length) { grid.innerHTML = `<div class="no-prods">${all.length?'No products found.':'No items at the exhibition yet.<br>Click <b>✏️ Edit Items</b> to bring items from the shop.'}</div>`; return; }
+  grid.innerHTML = list.map(p => {
+    const cat   = getCat(p.cat);
+    const imgH  = p.img?`<img src="${p.img}" alt="">`:(p.emoji||'📦');
+    const avail = exhQty(exh,p.id); const isOut = avail<=0;
+    return `<div class="pcard ${isOut?'out-stock':''}" onclick="${isOut?`window.showOutToast()`:`window.exhAddToCart('${p.id}')`}">
+      ${isOut?'<span class="stock-badge out">SOLD OUT</span>':''}<div class="pcard-img">${imgH}</div>
+      <div class="pcard-name">${p.name}</div>
+      <div class="pcard-bar">${p.bar}</div>
+      <div class="pcard-price">${fmt(p.price)}</div>
+      <div class="pcard-stock ${isOut?'out':'ok'}">${isOut?'None left here':'Available: '+avail}</div>
+      <div style="font-size:10px;color:var(--tx3)">${cat?cat.name:''}</div>
+    </div>`;
+  }).join('');
+}
+// Enter in the search box: an exact barcode adds that item, anything else stays as search text
+window.exhScan = function(inp) {
+  const p = DB.products.find(x => x.bar===inp.value.trim()); if (!p) return;
+  inp.value = ''; renderExhGrid(); exhAddToCart(p.id);
+};
+function exhAddToCart(pid) {
+  const p = getProd(pid); if (!p) return;
+  const avail = exhAt(pid);
+  if (avail<=0) { toast(p.name+' is not available at the exhibition','err'); return; }
+  const row = exhCart.find(r=>r.pid===pid);
+  if ((row?row.qty:0)>=avail) { toast('Only '+avail+' at the exhibition!','warn'); return; }
+  if (row) row.qty++; else exhCart.push({pid,qty:1,gift:false});
+  renderExhCart(); toast(p.name+' added','ok');
+}
+window.exhAddToCart = exhAddToCart;
+window.exhChangeQty = function(pid,delta) {
+  const row = exhCart.find(r=>r.pid===pid); if (!row) return;
+  if (delta>0&&row.qty>=exhAt(pid)) { toast('Only '+exhAt(pid)+' at the exhibition!','warn'); return; }
+  row.qty += delta; if (row.qty<=0) exhCart.splice(exhCart.indexOf(row),1); renderExhCart();
+};
+window.exhRemoveItem = function(pid) { exhCart=exhCart.filter(r=>r.pid!==pid); renderExhCart(); };
+window.exhToggleGift = function(pid) {
+  const row = exhCart.find(r=>r.pid===pid); if (!row) return;
+  row.gift = !row.gift; renderExhCart();
+  toast(row.gift?'🎁 Item gifted (price set to 0)':'Gift removed','ok');
+};
+window.exhClearCart = function() {
+  exhCart=[]; exhDVal=0;
+  document.getElementById('exh-disc-val').value=''; document.getElementById('exh-sale-note').value='';
+  renderExhCart(); window.exhTab('prods');
+};
+window.exhTab = function(which) {
+  document.getElementById('exh-pos').classList.toggle('show-cart', which==='cart');
+  document.getElementById('exh-mt-prods').classList.toggle('active', which!=='cart');
+  document.getElementById('exh-mt-cart').classList.toggle('active', which==='cart');
+};
+function renderExhCart() {
+  // Trim rows whose stock has left the exhibition (e.g. returned to the shop)
+  exhCart = exhCart.filter(r => getProd(r.pid) && exhAt(r.pid)>0);
+  exhCart.forEach(r => { r.qty = Math.min(r.qty, exhAt(r.pid)); });
+  const body  = document.getElementById('exh-cart-body');
+  const total = exhCart.reduce((s,r)=>s+r.qty,0);
+  document.getElementById('exh-cart-cnt').textContent = total+' item'+(total!==1?'s':'');
+  document.getElementById('exh-mt-cnt').textContent = total;
+  if (!exhCart.length) { body.innerHTML=`<div class="empty-st"><div class="ei">🎪</div><div>Tap an exhibition item to sell it</div></div>`; document.getElementById('exh-co-btn').disabled=true; updateExhTotals(); return; }
+  body.innerHTML = exhCart.map(row => {
+    const p=getProd(row.pid); const imgH=p.img?`<img src="${p.img}" alt="">`:(p.emoji||'📦');
+    const rem=exhAt(row.pid)-row.qty; const ss=rem<=0?'out':'ok';
+    const priceHtml = row.gift
+      ? `<div style="min-width:80px;text-align:right;flex-shrink:0"><div class="ci-price gifted">${fmt(p.price*row.qty)}</div><div style="font-size:11px;font-weight:700;color:var(--gr);font-family:'DM Mono',monospace">GIFT</div></div>`
+      : `<div class="ci-price">${fmt(p.price*row.qty)}</div>`;
+    return `<div class="ci${row.gift?' gifted-item':''}">
+      <div class="ci-img">${imgH}</div>
+      <div class="ci-info"><div class="ci-name">${p.name}</div><div class="ci-bar">${p.bar}</div><div class="ci-stock ${ss}">${rem<=0?'⚠ Last one here!':'Left here: '+rem}</div></div>
+      <div class="qty-ctrl"><button class="qbtn" onclick="exhChangeQty('${row.pid}',-1)">−</button><span class="qnum">${row.qty}</span><button class="qbtn" onclick="exhChangeQty('${row.pid}',1)">+</button></div>
+      ${priceHtml}
+      <button class="ci-gift${row.gift?' active':''}" onclick="exhToggleGift('${row.pid}')" title="${row.gift?'Remove gift':'Mark as gift'}">🎁</button>
+      <button class="ci-rm" onclick="exhRemoveItem('${row.pid}')">×</button>
+    </div>`;
+  }).join('');
+  document.getElementById('exh-co-btn').disabled=false; updateExhTotals();
+}
+function exhSubtotal() { return exhCart.reduce((s,r)=>{const p=getProd(r.pid);return s+(p&&!r.gift?p.price*r.qty:0);},0); }
+function exhTotal()    { const sub=exhSubtotal(); if(!exhDVal) return sub; return exhDType==='pct'?sub*(1-Math.min(exhDVal,100)/100):Math.max(0,sub-exhDVal); }
+function updateExhTotals() {
+  const sub=exhSubtotal(),total=exhTotal(),saved=sub-total;
+  document.getElementById('exh-sub').textContent   = fmt(sub);
+  document.getElementById('exh-total').textContent = fmt(total);
+  document.getElementById('exh-saved-lbl').textContent = saved>0?'Saved '+fmt(saved):'';
+}
+window.exhSetDT = function(t) { exhDType=t; document.getElementById('exh-dbt-pct').classList.toggle('active',t==='pct'); document.getElementById('exh-dbt-amt').classList.toggle('active',t==='amt'); };
+window.exhApplyDisc = function() { exhDVal=parseFloat(document.getElementById('exh-disc-val').value)||0; updateExhTotals(); toast('Discount applied','ok'); };
+
+window.exhCheckout = function() {
+  if (!exhCart.length) return;
+  const grid = document.getElementById('payment-methods-grid');
+  grid.innerHTML = DB.paymentMethods.length
+    ? paymentButtonsHTML(m => `window.exhSelectPayment('${m.id}')`)
+    : `<div style="grid-column:1/-1;padding:16px;text-align:center;color:var(--tx3);font-size:13px;">No payment methods yet.<br>Go to <strong>⚙️ Settings</strong> to add them.</div>`;
+  openM('m-payment');
+};
+window.exhSelectPayment = guard(async function(pmId) {
+  closeM('m-payment');
+  const exh = getActiveExh(); if (!exh || !exhCart.length) return;
+  const short = exhCart.find(r => r.qty>exhAt(r.pid));
+  if (short) { toast('Only '+exhAt(short.pid)+' of '+getProd(short.pid).name+' left at the exhibition','err'); renderExhCart(); return; }
+  const pm  = DB.paymentMethods.find(m=>m.id===pmId) || {};
+  const sub = exhSubtotal(), total = exhTotal();
+  showLoading('Processing sale...');
+  try {
+    const saleData = {
+      date:         serverTimestamp(),
+      cashier:      ME.name,
+      cashierId:    ME.id,
+      shiftId:      null,  // exhibition cash is not part of the shop's shift drawer
+      customerId:   null,
+      customerName: null,
+      items: exhCart.map(r=>{ const p=getProd(r.pid); const effectivePrice=r.gift?0:p.price; return{name:p.name,bar:p.bar,price:effectivePrice,cost:r.gift?0:p.cost,qty:r.qty,line:effectivePrice*r.qty,gift:r.gift||false}; }),
+      subtotal:sub, discount:sub-total, total,
+      note: (document.getElementById('exh-sale-note').value||'').trim()||null,
+      paymentMethod: pm.name||null, paymentMethodId: pmId, paymentIcon: pm.icon||'💳',
+      exhibitionId: exh.id, exhibitionName: exh.name,
+    };
+    // Sale + exhibition stock deduction in one atomic write
+    const saleRef = doc(COL.sales());
+    const b = writeBatch(db);
+    b.set(saleRef, saleData);
+    const upd = {}; exhCart.forEach(r => { upd['items.'+r.pid] = increment(-r.qty); });
+    b.update(doc(db,'exhibitions',exh.id), upd);
+    await b.commit();
+    const sale = { id:saleRef.id, ...saleData, date: new Date().toISOString() };
+    writeLog('exhibition_sale_created', { saleId:saleRef.id, exhibition:exh.name, total, paymentMethod:pm.name, items:saleData.items.length });
+    window.exhClearCart();
+    hideLoading();
+    showReceipt(sale, true);
+  } catch(e) { hideLoading(); toast('Error: '+e.message,'err'); }
+});
+
+// ── Edit Items: move stock between the shop and the exhibition ──
+window.openExhItems = function() {
+  if (!getActiveExh()) return;
+  document.getElementById('exh-items-srch').value = '';
+  document.getElementById('exh-items-cat').innerHTML = '<option value="">All categories</option>'+DB.cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('exh-items-wrap').innerHTML = '';
+  renderExhItems(); openM('m-exh-items');
+};
+function renderExhItems() {
+  const exh  = getActiveExh();
+  const wrap = document.getElementById('exh-items-wrap');
+  if (!exh) { closeM('m-exh-items'); return; }
+  const q    = srchVal('exh-items-srch');
+  const cat  = document.getElementById('exh-items-cat').value;
+  const only = document.getElementById('exh-items-only').checked;
+  const list = DB.products.filter(p => (!cat||p.cat===cat) && prodMatches(p,q) && (!only||exhQty(exh,p.id)>0)).sort((a,b)=>a.name.localeCompare(b.name));
+  // Keep quantities already typed when live updates re-render the table
+  const typed = {}; wrap.querySelectorAll('input[data-pid]').forEach(i => { if (i.value) typed[i.dataset.pid] = i.value; });
+  if (!list.length) { wrap.innerHTML = '<div style="padding:28px;text-align:center;color:var(--tx3)">No products found.</div>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Product</th><th>In Shop</th><th>At Exhibition</th><th>Qty</th><th></th></tr></thead>
+    <tbody>${list.map(p => {
+      const at = exhQty(exh,p.id), shop = p.stock||0, c = getCat(p.cat);
+      return `<tr>
+        <td><strong>${p.emoji||'📦'} ${p.name}</strong><br><small style="font-family:'DM Mono',monospace;color:var(--tx3)">${p.bar}${c?' · '+c.name:''}</small></td>
+        <td style="font-family:'DM Mono',monospace;font-weight:700">${shop}</td>
+        <td style="font-family:'DM Mono',monospace;font-weight:700;color:${at?'var(--or)':'var(--tx3)'}">${at}</td>
+        <td><input data-pid="${p.id}" id="exhmv-${p.id}" type="number" min="1" placeholder="0" value="${typed[p.id]||''}" style="width:64px;padding:5px 7px;border:1.5px solid var(--bdr);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;text-align:center;outline:none"></td>
+        <td style="white-space:nowrap">
+          <button class="btn-p" style="padding:5px 9px;font-size:12px" onclick="window.exhMove('${p.id}',1)" ${shop?'':'disabled'}>Send →</button>
+          <button class="btn-s" style="padding:5px 9px;font-size:12px" onclick="window.exhMove('${p.id}',-1)" ${at?'':'disabled'}>← Return</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+window.renderExhItems = renderExhItems;
+// dir = 1 sends qty from the shop to the exhibition, -1 returns it to the shop
+window.exhMove = guard(async function(pid, dir) {
+  const exh = getActiveExh(), p = getProd(pid); if (!exh || !p) return;
+  const n = parseInt(document.getElementById('exhmv-'+pid)?.value)||0;
+  if (n<=0) { toast('Enter a quantity first','err'); return; }
+  if (dir>0 && n>(p.stock||0))     { toast('Only '+(p.stock||0)+' in the shop','err'); return; }
+  if (dir<0 && n>exhQty(exh,pid))  { toast('Only '+exhQty(exh,pid)+' at the exhibition','err'); return; }
+  showLoading(dir>0?'Sending to exhibition...':'Returning to shop...');
+  try {
+    const b = writeBatch(db);
+    b.update(doc(db,'products',pid), { stock: increment(-dir*n) });
+    b.update(doc(db,'exhibitions',exh.id), { ['items.'+pid]: increment(dir*n), [(dir>0?'sent.':'returned.')+pid]: increment(n) });
+    await b.commit();
+    const el = document.getElementById('exhmv-'+pid); if (el) el.value = '';
+    writeLog(dir>0?'exhibition_stock_sent':'exhibition_stock_returned', { exhibition:exh.name, product:p.name, qty:n });
+    toast(dir>0?`🎪 ${n} × ${p.name} sent to the exhibition`:`↩ ${n} × ${p.name} returned to the shop`, 'ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+});
+
+// ── Start / close ──
+window.exhStart = guard(async function() {
+  if (getActiveExh()) { toast('An exhibition is already running','err'); return; }
+  const name = document.getElementById('exh-new-name').value.trim();
+  if (!name) { toast('Enter the exhibition name','err'); return; }
+  showLoading('Starting exhibition...');
+  try {
+    await addDoc(COL.exhibitions(), { name, status:'open', startedAt:serverTimestamp(), endedAt:null, createdBy:ME.name, items:{}, sent:{}, returned:{} });
+    document.getElementById('exh-new-name').value = '';
+    writeLog('exhibition_started', { name });
+    toast('🎪 Exhibition started — add items with ✏️ Edit Items','ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+});
+window.exhClose = guard(async function() {
+  const exh = getActiveExh(); if (!exh) return;
+  const left = DB.products.filter(p => exhQty(exh,p.id)>0);
+  const n = left.reduce((a,p)=>a+exhQty(exh,p.id),0);
+  if (!confirm(`Close "${exh.name}"?\n\n${n?n+' unsold item(s) will be returned to the shop stock.':'There are no unsold items left.'}`)) return;
+  showLoading('Closing exhibition...');
+  try {
+    const b = writeBatch(db);
+    const upd = { status:'closed', endedAt:serverTimestamp(), closedBy:ME.name };
+    left.forEach(p => {
+      const q = exhQty(exh,p.id);
+      b.update(doc(db,'products',p.id), { stock: increment(q) });
+      upd['items.'+p.id] = 0; upd['returned.'+p.id] = increment(q);
+    });
+    b.update(doc(db,'exhibitions',exh.id), upd);
+    await b.commit();
+    exhCart = [];
+    writeLog('exhibition_closed', { name:exh.name, returnedItems:n });
+    toast(`Exhibition closed${n?' — '+n+' item(s) back in the shop':''}`,'ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  hideLoading();
+});
+
+function renderExhHistory() {
+  const wrap = document.getElementById('exh-history');
+  const past = DB.exhibitions.filter(e => e.status==='closed');
+  if (!past.length) { wrap.innerHTML=''; return; }
+  wrap.innerHTML = `<div class="cost-sec"><div class="cost-sec-hdr">📜 Past Exhibitions (${past.length})</div>${past.map(e => {
+    const sales = exhSalesOf(e);
+    const rev  = sales.reduce((a,s)=>a+s.total,0);
+    const sold = sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.qty,0),0);
+    return `<div class="cost-row" style="flex-wrap:wrap;gap:6px 14px">
+      <div style="flex:1;min-width:180px"><div style="font-weight:600">🎪 ${escapeHtml(e.name)}</div><div style="font-size:11px;color:var(--tx3)">${fmtD(e.startedAt)} → ${e.endedAt?fmtD(e.endedAt):'—'}</div></div>
+      <div style="font-size:12px;color:var(--tx2)">Taken: <b>${sumQty(e.sent)}</b> · Sold: <b>${sold}</b> · Returned: <b>${sumQty(e.returned)}</b></div>
+      <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--gr)">${fmt(rev)}</div>
+      <button class="btn-excel" style="padding:5px 10px;font-size:12px" onclick="window.exportExhibition('${e.id}')">📊 Excel</button>
+    </div>`;
+  }).join('')}</div>`;
+}
+// ── Excel export for one exhibition: summary, per-item movement, and sales ──
+window.exportExhibition = function(id) {
+  const e = DB.exhibitions.find(x=>x.id===id); if (!e) return;
+  const sales = exhSalesOf(e).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const soldByBar = {}, revByBar = {};
+  sales.forEach(s=>s.items.forEach(i=>{ soldByBar[i.bar]=(soldByBar[i.bar]||0)+i.qty; revByBar[i.bar]=(revByBar[i.bar]||0)+i.line; }));
+  const rev  = sales.reduce((a,s)=>a+s.total,0);
+  const disc = sales.reduce((a,s)=>a+s.discount,0);
+  const cost = sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+(i.cost||0)*i.qty,0),0);
+  const sold = Object.values(soldByBar).reduce((a,n)=>a+n,0);
+  const wb = XLSX.utils.book_new();
+
+  const ws1 = XLSX.utils.aoa_to_sheet([
+    ['Shathriat — Exhibition Report'],[''],
+    ['Exhibition', e.name],
+    ['Status', e.status==='open'?'Running':'Closed'],
+    ['Started', fmtDT(e.startedAt)],
+    ['Ended', e.endedAt?fmtDT(e.endedAt):'—'],
+    ['Started by', e.createdBy||'—'],
+    ['Generated', fmtDT(new Date().toISOString())],[''],
+    ['Items Taken', sumQty(e.sent)],
+    ['Items Sold', sold],
+    ['Items Returned', sumQty(e.returned)],
+    ['Still at Exhibition', sumQty(e.items)],[''],
+    ['Sales', sales.length],
+    ['Discounts (IQD)', Math.round(disc)],
+    ['Revenue (IQD)', Math.round(rev)],
+    ['Cost (IQD)', Math.round(cost)],
+    ['Profit (IQD)', Math.round(rev-cost)],
+  ]);
+  ws1['!cols']=[{wch:22},{wch:30}]; XLSX.utils.book_append_sheet(wb, ws1, '📊 Summary');
+
+  const pids = new Set([...Object.keys(e.sent||{}), ...Object.keys(e.items||{}), ...Object.keys(e.returned||{})]);
+  const itemRows = [['Product','Barcode','Category','Price (IQD)','Taken','Sold','Returned','Still There','Sales (IQD)']];
+  [...pids].map(pid=>({pid,p:getProd(pid)})).sort((a,b)=>(a.p?.name||'').localeCompare(b.p?.name||'')).forEach(({pid,p})=>{
+    const bar=p?.bar;
+    itemRows.push([p?p.name:'(deleted product)', bar||'—', getCat(p?.cat)?.name||'—', Math.round(p?.price||0),
+      (e.sent||{})[pid]||0, bar?soldByBar[bar]||0:0, (e.returned||{})[pid]||0, exhQty(e,pid), Math.round(bar?revByBar[bar]||0:0)]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(itemRows);
+  ws2['!cols']=[{wch:30},{wch:16},{wch:20},{wch:12},{wch:8},{wch:8},{wch:10},{wch:11},{wch:14}]; XLSX.utils.book_append_sheet(wb, ws2, '📦 Items');
+
+  const saleRows = [['Sale #','Date','Time','Cashier','Payment','Items Qty','Items Detail','Subtotal (IQD)','Discount (IQD)','Total (IQD)','Note']];
+  sales.forEach(s=>saleRows.push(['#'+s.id.slice(-6), fmtD(s.date), fmtT(s.date), s.cashier, s.paymentMethod||'—',
+    s.items.reduce((a,i)=>a+i.qty,0), s.items.map(i=>i.name+' ×'+i.qty+(i.gift?' (gift)':'')).join(', '),
+    Math.round(s.subtotal), Math.round(s.discount), Math.round(s.total), s.note||'']));
+  const ws3 = XLSX.utils.aoa_to_sheet(saleRows);
+  ws3['!cols']=[{wch:8},{wch:14},{wch:10},{wch:16},{wch:14},{wch:10},{wch:50},{wch:14},{wch:14},{wch:14},{wch:24}]; XLSX.utils.book_append_sheet(wb, ws3, '🧾 Sales');
+
+  const fn = `Shathriat_Exhibition_${e.name.replace(/[^\w\u0600-\u06FF]+/g,'_').replace(/^_+|_+$/g,'')}_${e.startedAt.slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fn); toast('✅ Exported: '+fn,'ok');
+};
+window.renderExhGrid    = renderExhGrid;
+window.renderExhibition = renderExhibition;
+
+// ══════════════════════════════════════════
 // WIRE ALL BUTTONS — runs at module load time
 // (DOMContentLoaded already fired by the time
 //  a module executes, so we wire directly here)
@@ -2525,6 +3099,13 @@ function wireAllButtons() {
   wireBtn('btn-do-savecust',       () => window.saveCustomer());
   wireBtn('btn-close-custprofile', () => closeM('m-custprofile'));
 
+  // Exhibition (admin)
+  wireBtn('btn-exh-start', () => window.exhStart());
+  wireBtn('btn-exh-items', () => window.openExhItems());
+  wireBtn('btn-exh-close', () => window.exhClose());
+  wireBtn('btn-exh-export', () => { const e=getActiveExh(); if(e) window.exportExhibition(e.id); });
+  document.getElementById('exh-new-name')?.addEventListener('keydown', e => { if(e.key==='Enter') window.exhStart(); });
+
   // Edit sale modal (admin)
   wireBtn('edit-sale-cancel-btn', () => closeM('m-edit-sale'));
   wireBtn('edit-sale-save-btn',   () => saveEditSale());
@@ -2586,7 +3167,7 @@ let editingSaleOriginalItems = null; // items as currently reflected in stock (p
 
 // Reconciles product stock against a change in a sale's items (by barcode).
 // originalItems is what was already deducted from stock; newItems is what should be deducted after saving/deleting.
-async function _applyStockDiff(originalItems, newItems) {
+async function _applyStockDiff(originalItems, newItems, sale) {
   const origMap={}; originalItems.forEach(i=>{origMap[i.bar]=(origMap[i.bar]||0)+i.qty;});
   const newMap={}; newItems.forEach(i=>{newMap[i.bar]=(newMap[i.bar]||0)+i.qty;});
   const bars=new Set([...Object.keys(origMap),...Object.keys(newMap)]);
@@ -2597,6 +3178,14 @@ async function _applyStockDiff(originalItems, newItems) {
     const p=DB.products.find(pr=>pr.bar===bar);
     if(p) changes.push({p,diff});
   });
+  // Exhibition sales draw from the exhibition's stock while it is still open; otherwise from the shop
+  const exh = sale && sale.exhibitionId ? DB.exhibitions.find(e=>e.id===sale.exhibitionId && e.status==='open') : null;
+  if (exh) {
+    if (!changes.length) return;
+    const upd={}; changes.forEach(({p,diff})=>{ upd['items.'+p.id]=Math.max(0,exhQty(exh,p.id)+diff); });
+    await updateDoc(doc(db,'exhibitions',exh.id), upd);
+    return;
+  }
   await Promise.all(changes.map(({p,diff})=>updateDoc(doc(db,'products',p.id),{stock:Math.max(0,(p.stock||0)+diff)})));
   changes.forEach(({p,diff})=>{ p.stock=Math.max(0,(p.stock||0)+diff); });
 }
@@ -2706,7 +3295,7 @@ async function saveEditSale() {
     };
     await updateDoc(doc(db, 'sales', editingSale.id), updated);
     // Return/deduct stock for whatever changed between the original and edited items
-    await _applyStockDiff(editingSaleOriginalItems, editingSale.items);
+    await _applyStockDiff(editingSaleOriginalItems, editingSale.items, editingSale);
     // Update local DB
     const local = DB.sales.find(s => s.id === editingSale.id);
     if (local) Object.assign(local, updated);
@@ -2726,7 +3315,7 @@ async function deleteEditSale() {
   try {
     await deleteDoc(doc(db, 'sales', editingSale.id));
     // Return the sale's items to stock — nothing sold now, so all of it goes back
-    await _applyStockDiff(editingSaleOriginalItems, []);
+    await _applyStockDiff(editingSaleOriginalItems, [], editingSale);
     // Remove from local DB
     DB.sales = DB.sales.filter(s => s.id !== editingSale.id);
     // Remove from shift saleIds if linked
